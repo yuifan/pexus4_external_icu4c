@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
 // * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
 // * Source File:<path>/common/collation/fa.xml
@@ -14,15 +14,15 @@ fa{
     collations{
         standard{
             Sequence{
-                " [normalization on ]"
+                " [normalization on] [reorder Arab]"
                 "&َ<<ِ<<ُ<<ً<<ٍ<<ٌ"
                 "&[before 1]ا<آ"
-                "&ا<<ٱ<ء<<أ<<ٲ<<إ<<ٳ<<ؤ<<یٔ<<<ىٔ<<<ئ"
-                "&ک<<ڪ<<ګ<<ك<<ڬ<<ڭ<<ڮ"
-                "&ۏ<ه<<ە<<ہ<<ة<<ۃ<<ۀ<<ھ"
-                "&ی<<ى<<ے<<ي<<ې<<ۑ<<ۍ<<ێ"
+                "&ا<<ٱ<ء<<أ<<*ٲ<<إ<<*ٳ<<ؤ<<یٔ<<<ىٔ<<<ئ"
+                "&ک<<*ڪګكڬ-ڮ"
+                "&ۏ<ه<<*ەہةۃ<<ۀ<<*ھ"
+                "&ی<<*ىےيېۑۍێ"
             }
-            Version{"1.8.1"}
+            Version{"22.1.1"}
         }
     }
 }

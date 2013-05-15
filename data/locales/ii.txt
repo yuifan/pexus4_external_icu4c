@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/ii.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/ii.xml
 // *
 // ***************************************************************************
 /**
@@ -15,20 +15,14 @@ ii{
         "Yiii",
     }
     NumberElements{
-        ".",
-        ",",
-        ";",
-        "%",
-        "0",
-        "#",
-        "-",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
+        latn{
+            symbols{
+                decimal{"."}
+                group{","}
+            }
+        }
     }
-    Version{"2.0.47.63"}
+    Version{"2.0.74.65"}
     calendar{
         gregorian{
             AmPmMarkers{
@@ -38,7 +32,7 @@ ii{
             dayNames{
                 format{
                     abbreviated{
-                        "ꆏꑍ",
+                        "ꑭꆏ",
                         "ꆏꋍ",
                         "ꆏꑍ",
                         "ꆏꌕ",

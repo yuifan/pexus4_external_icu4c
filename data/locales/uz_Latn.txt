@@ -1,53 +1,28 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/uz_Latn.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/uz_Latn.xml
 // *
 // ***************************************************************************
 /**
  *  ICU <specials> source: <path>/xml/main/uz_Latn.xml
  */
 uz_Latn{
-    %%ParentIsRoot:int{1}
-    ExemplarCharacters{"[a b c d e f g h i j k l m n o p q r s t u v x y z ʿ]"}
-    ExemplarCharactersIndex{"[A B C D E F G H I J K L M N O P Q R S T U V W X Y Z ʿ]"}
+    %%Parent{"root"}
+    AuxExemplarCharacters{"[c w]"}
+    ExemplarCharacters{
+        "[a {aʼ} b {ch} d e {eʼ} f g {gʻ} h i {iʼ} j k l m n o {oʻ} p q r s {sh} t u "
+        "{uʼ} v x y z]"
+    }
+    ExemplarCharactersIndex{"[A B {CH} D E F G {Gʻ} H I J K L M N O {Oʻ} P Q R S {SH} T U V X Y Z]"}
     LocaleScript{
         "Latn",
     }
-    NumberElements{
-        ",",
-        " ",
-        ";",
-        "%",
-        "0",
-        "#",
-        "-",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
-    }
-    Version{"2.0.47.68"}
+    Version{"2.0.74.98"}
     calendar{
         gregorian{
-            DateTimePatterns{
-                "HH:mm:ss zzzz",
-                "HH:mm:ss z",
-                "HH:mm:ss",
-                "HH:mm",
-                "EEEE, y MMMM dd",
-                "y MMMM d",
-                "y MMM d",
-                "yy/MM/dd",
-                "{1} {0}",
-                "{1} {0}",
-                "{1} {0}",
-                "{1} {0}",
-                "{1} {0}",
-            }
             dayNames{
                 format{
                     abbreviated{
@@ -56,7 +31,7 @@ uz_Latn{
                         "Sesh",
                         "Chor",
                         "Pay",
-                        "Jum",
+                        "Cum",
                         "Shan",
                     }
                     wide{
@@ -65,7 +40,7 @@ uz_Latn{
                         "seshanba",
                         "chorshanba",
                         "payshanba",
-                        "juma",
+                        "cuma",
                         "shanba",
                     }
                 }
@@ -76,7 +51,7 @@ uz_Latn{
                         "S",
                         "C",
                         "P",
-                        "J",
+                        "C",
                         "S",
                     }
                 }
@@ -96,6 +71,20 @@ uz_Latn{
                         "Okt",
                         "Noya",
                         "Dek",
+                    }
+                    wide{
+                        "Yanvar",
+                        "Fevral",
+                        "Mart",
+                        "Aprel",
+                        "May",
+                        "Iyun",
+                        "Iyul",
+                        "Avgust",
+                        "Sentyabr",
+                        "Oktyabr",
+                        "Noyabr",
+                        "Dekabr",
                     }
                 }
                 stand-alone{
@@ -122,16 +111,16 @@ uz_Latn{
                     wide{
                         "Muharram",
                         "Safar",
-                        "Rabiul-avval",
-                        "Rabiul-oxir",
-                        "Jumodiul-ulo",
-                        "Jumodiul-uxro",
+                        "Robiʼ ul-avval",
+                        "Robiʼ ul-oxir",
+                        "Jumad ul-avval",
+                        "Jumad ul-oxir",
                         "Rajab",
-                        "Shaʿbon",
+                        "Shaʼbon",
                         "Ramazon",
                         "Shavvol",
-                        "Zil-qaʿda",
-                        "Zil-hijja",
+                        "Zul-qaʼda",
+                        "Zul-hijja",
                     }
                 }
             }

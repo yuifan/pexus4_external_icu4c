@@ -1,6 +1,6 @@
 /*****************************************************************************
 *
-*   Copyright (C) 1999-2009, International Business Machines
+*   Copyright (C) 1999-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************/
@@ -26,6 +26,7 @@
 #include <unicode/translit.h>
 #include <unicode/uset.h>
 #include <unicode/uclean.h>
+#include <unicode/utf16.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -40,10 +41,10 @@
 
 U_NAMESPACE_USE
 
-#if (defined(U_WINDOWS) || defined(U_CYGWIN)) && !defined(__STRICT_ANSI__)
+#if U_PLATFORM_USES_ONLY_WIN32_API && !defined(__STRICT_ANSI__)
 #include <io.h>
 #include <fcntl.h>
-#if defined(U_WINDOWS)
+#if U_PLATFORM_USES_ONLY_WIN32_API
 #define USE_FILENO_BINARY_MODE 1
 /* Windows likes to rename Unix-like functions */
 #ifndef fileno
@@ -377,54 +378,28 @@ static int printTransliterators(UBool canon)
     printf("no transliterators available because of UCONFIG_NO_TRANSLITERATION, see uconfig.h\n");
     return 1;
 #else
-    int32_t numtrans = utrans_countAvailableIDs(), i;
-    int buflen = 512;
-    char *buf = (char *) uprv_malloc(buflen);
-    char staticbuf[512];
+    UErrorCode status = U_ZERO_ERROR;
+    UEnumeration *ids = utrans_openIDs(&status);
+    int32_t i, numtrans = uenum_count(ids, &status);
 
     char sepchar = canon ? '\n' : ' ';
 
-    if (!buf) {
-        buf = staticbuf;
-        buflen = sizeof(staticbuf);
-    }
+    for (i = 0; U_SUCCESS(status)&& (i < numtrans); ++i) {
+    	int32_t len;
+    	const char *nextTrans = uenum_next(ids, &len, &status);
 
-    for (i = 0; i < numtrans; ++i) {
-        int32_t len = utrans_getAvailableID(i, buf, buflen);
-        if (len >= buflen - 1) {
-            if (buf != staticbuf) {
-                buflen <<= 1;
-                if (buflen < len) {
-                    buflen = len + 64;
-                }
-                buf = (char *) uprv_realloc(buf, buflen);
-                if (!buf) {
-                    buf = staticbuf;
-                    buflen = sizeof(staticbuf);
-                }
-            }
-            utrans_getAvailableID(i, buf, buflen);
-            if (len >= buflen) {
-                uprv_strcpy(buf + buflen - 4, "..."); /* Truncate the name. */
-            }
-        }
-
-        printf("%s", buf);
+        printf("%s", nextTrans);
         if (i < numtrans - 1) {
             putchar(sepchar);
         }
     }
 
+    uenum_close(ids);
+
     /* Add a terminating newline if needed. */
 
     if (sepchar != '\n') {
         putchar('\n');
-    }
-
-    /* Free temporary data. */
-
-    if (buf != staticbuf) {
-        uprv_free(buf);
     }
 
     /* Success. */
@@ -619,6 +594,7 @@ ConvertFile::convertFile(const char *pname,
     UConverter *convto = 0;
     UErrorCode err = U_ZERO_ERROR;
     UBool flush;
+    UBool closeFile = FALSE;
     const char *cbufp, *prevbufp;
     char *bufp;
 
@@ -654,6 +630,7 @@ ConvertFile::convertFile(const char *pname,
             u_wmsg(stderr, "cantOpenInputF", str1.getBuffer(), str2.getBuffer());
             return FALSE;
         }
+        closeFile = TRUE;
     } else {
         infilestr = "-";
         infile = stdin;
@@ -1077,7 +1054,7 @@ normal_exit:
     delete t;
 #endif
 
-    if (infile != stdin) {
+    if (closeFile) {
         fclose(infile);
     }
 
@@ -1160,7 +1137,7 @@ main(int argc, char **argv)
 
     // Get and prettify pname.
     pname = uprv_strrchr(*argv, U_FILE_SEP_CHAR);
-#ifdef U_WINDOWS
+#if U_PLATFORM_USES_ONLY_WIN32_API
     if (!pname) {
         pname = uprv_strrchr(*argv, '/');
     }
@@ -1403,6 +1380,8 @@ normal_exit:
     if (outfile != stdout) {
         fclose(outfile);
     }
+
+    u_cleanup();
 
     return ret;
 }

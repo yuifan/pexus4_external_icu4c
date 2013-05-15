@@ -1,14 +1,14 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1999-2010, International Business Machines
+*   Copyright (C) 1999-2011, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************/
 
 
 /*----------------------------------------------------------------------------
- *                           
+ *
  *       Memory mapped file wrappers for use by the ICU Data Implementation
  *       All of the platform-specific implementation for mapping data files
  *         is here.  The rest of the ICU Data implementation uses only the
@@ -59,10 +59,6 @@
 #       define LIB_SUFFIX ".dll"
         /* This is inconvienient until we figure out what to do with U_ICUDATA_NAME in utypes.h */
 #       define U_ICUDATA_ENTRY_NAME "icudt" U_ICU_VERSION_SHORT U_LIB_SUFFIX_C_NAME_STRING "_dat"
-#   else
-#       if defined(U_DARWIN)
-#           include <TargetConditionals.h>
-#       endif
 #   endif
 #elif MAP_IMPLEMENTATION==MAP_STDIO
 #   include <stdio.h>
@@ -80,17 +76,17 @@
  *                                                                            *
  *----------------------------------------------------------------------------*/
 #if MAP_IMPLEMENTATION==MAP_NONE
-    UBool
+    U_CFUNC UBool
     uprv_mapFile(UDataMemory *pData, const char *path) {
         UDataMemory_init(pData); /* Clear the output struct. */
         return FALSE;            /* no file access */
     }
 
-    void uprv_unmapFile(UDataMemory *pData) {
+    U_CFUNC void uprv_unmapFile(UDataMemory *pData) {
         /* nothing to do */
     }
 #elif MAP_IMPLEMENTATION==MAP_WIN32
-    UBool
+    U_CFUNC UBool
     uprv_mapFile(
          UDataMemory *pData,    /* Fill in with info on the result doing the mapping. */
                                 /*   Output only; any original contents are cleared.  */
@@ -146,8 +142,7 @@
         return TRUE;
     }
 
-
-    void
+    U_CFUNC void
     uprv_unmapFile(UDataMemory *pData) {
         if(pData!=NULL && pData->map!=NULL) {
             UnmapViewOfFile(pData->pHeader);
@@ -160,7 +155,7 @@
 
 
 #elif MAP_IMPLEMENTATION==MAP_POSIX
-    UBool
+    U_CFUNC UBool
     uprv_mapFile(UDataMemory *pData, const char *path) {
         int fd;
         int length;
@@ -182,7 +177,7 @@
         }
 
         /* get a view of the mapping */
-#ifndef U_HPUX
+#if U_PLATFORM != U_PF_HPUX
         data=mmap(0, length, PROT_READ, MAP_SHARED,  fd, 0);
 #else
         data=mmap(0, length, PROT_READ, MAP_PRIVATE, fd, 0);
@@ -195,15 +190,13 @@
         pData->map = (char *)data + length;
         pData->pHeader=(const DataHeader *)data;
         pData->mapAddr = data;
-#if defined(U_DARWIN) && TARGET_OS_IPHONE
+#if U_PLATFORM == U_PF_IPHONE
         posix_madvise(data, length, POSIX_MADV_RANDOM);
 #endif
         return TRUE;
     }
 
-    
-    
-    void
+    U_CFUNC void
     uprv_unmapFile(UDataMemory *pData) {
         if(pData!=NULL && pData->map!=NULL) {
             size_t dataLen = (char *)pData->map - (char *)pData->mapAddr;
@@ -232,7 +225,7 @@
         return size;
     }
 
-    UBool
+    U_CFUNC UBool
     uprv_mapFile(UDataMemory *pData, const char *path) {
         FILE *file;
         int32_t fileLength;
@@ -273,7 +266,7 @@
         return TRUE;
     }
 
-    void
+    U_CFUNC void
     uprv_unmapFile(UDataMemory *pData) {
         if(pData!=NULL && pData->map!=NULL) {
             uprv_free(pData->map);
@@ -361,7 +354,7 @@
 
 #   define DATA_TYPE "dat"
 
-    UBool uprv_mapFile(UDataMemory *pData, const char *path) {
+    U_CFUNC UBool uprv_mapFile(UDataMemory *pData, const char *path) {
         const char *inBasename;
         char *basename;
         char pathBuffer[1024];
@@ -454,9 +447,7 @@
          }
     }
 
-
-
-    void uprv_unmapFile(UDataMemory *pData) {
+    U_CFUNC void uprv_unmapFile(UDataMemory *pData) {
         if(pData!=NULL && pData->map!=NULL) {
             uprv_free(pData->map);
             pData->map     = NULL;

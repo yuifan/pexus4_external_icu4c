@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/be.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/be.xml
 // *
 // ***************************************************************************
 /**
@@ -12,32 +12,25 @@
 be{
     AuxExemplarCharacters{"[]"}
     ExemplarCharacters{"[а б в г д {дж} {дз} е ё ж з і й к л м н о п р с т у ў ф х ц ч ш ы ь э ю я]"}
-    ExemplarCharactersCurrency{"[a b c d e f g h i j k l m n o p q r s t u v w x y z]"}
     ExemplarCharactersIndex{"[А Б В Г Д Е Ж З І Й К Л М Н О П Р С Т У Ф Х Ц Ч Ш Ы Э Ю Я]"}
     LocaleScript{
         "Cyrl",
     }
     NumberElements{
-        ",",
-        " ",
-        ";",
-        "%",
-        "0",
-        "#",
-        "-",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
+        latn{
+            patterns{
+                currencyFormat{"¤#,##0.00"}
+                decimalFormat{"#,##0.###"}
+                percentFormat{"#,##0%"}
+                scientificFormat{"#E0"}
+            }
+            symbols{
+                decimal{","}
+                group{" "}
+            }
+        }
     }
-    NumberPatterns{
-        "#,##0.###",
-        "¤#,##0.00",
-        "#,##0%",
-        "#E0",
-    }
-    Version{"2.0.47.68"}
+    Version{"2.0.78.38"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -54,6 +47,28 @@ be{
                 "{1} {0}",
                 "{1} {0}",
                 "{1} {0}",
+            }
+            availableFormats{
+                Ed{"E, d"}
+                Gy{"G y"}
+                Hm{"HH.mm"}
+                Hms{"HH.mm.ss"}
+                M{"L"}
+                MEd{"E, d.M"}
+                MMM{"LLL"}
+                MMMEd{"E, d MMM"}
+                MMMd{"d MMM"}
+                Md{"d.M"}
+                d{"d"}
+                hm{"h.mm a"}
+                hms{"h.mm.ss a"}
+                y{"G y"}
+                yM{"M.yy"}
+                yMEd{"E, d.M.yy"}
+                yMMM{"MMM y G"}
+                yMMMEd{"E, d MMM y G"}
+                yMMMd{"d MMM y G"}
+                yMd{"d.M.yy"}
             }
         }
         gregorian{
@@ -92,12 +107,14 @@ be{
                 ms{"mm.ss"}
                 y{"y"}
                 yM{"MM/yyyy"}
-                yMEd{"EEE, dd/MM/yyyy"}
+                yMEd{"E, dd/MM/yyyy"}
                 yMMM{"MMM y"}
-                yMMMEd{"EEE, d MMM y"}
+                yMMMEd{"E, d MMM y"}
                 yMMMM{"MMMM y"}
-                yQ{"Q 'кв'. y"}
+                yMMMd{"d MMM y"}
+                yMd{"d.M.yy"}
                 yQQQ{"QQQ y"}
+                yQQQQ{"QQQQ y"}
                 yyyyM{"MM/yyyy"}
             }
             dayNames{
@@ -151,7 +168,7 @@ be{
                     }
                 }
                 dayperiod{
-                    dn{"Dayperiod"}
+                    dn{"ДП/ПП"}
                 }
                 era{
                     dn{"эра"}
@@ -290,10 +307,10 @@ be{
         }
     }
     delimiters{
-        alternateQuotationEnd{"»"}
-        alternateQuotationStart{"«"}
-        quotationEnd{"”"}
-        quotationStart{"„"}
+        alternateQuotationEnd{"›"}
+        alternateQuotationStart{"‹"}
+        quotationEnd{"»"}
+        quotationStart{"«"}
     }
     measurementSystemNames{
         US{"ЗША"}

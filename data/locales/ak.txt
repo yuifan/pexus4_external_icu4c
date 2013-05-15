@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/ak.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/ak.xml
 // *
 // ***************************************************************************
 /**
@@ -17,26 +17,17 @@ ak{
         "Latn",
     }
     NumberElements{
-        ".",
-        " ",
-        ";",
-        "%",
-        "0",
-        "#",
-        "-",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
+        latn{
+            patterns{
+                currencyFormat{"¤#,##0.00"}
+            }
+            symbols{
+                decimal{"."}
+                group{","}
+            }
+        }
     }
-    NumberPatterns{
-        "#,##0.###",
-        "¤#,##0.00",
-        "#,##0%",
-        "#E0",
-    }
-    Version{"2.0.47.53"}
+    Version{"2.0.78.30"}
     calendar{
         gregorian{
             AmPmMarkers{
@@ -74,13 +65,13 @@ ak{
                 ms{"mm:ss"}
                 y{"yyyy"}
                 yM{"M/yyyy"}
-                yMEd{"EEE, M/d/yyyy"}
+                yMEd{"E, M/d/yyyy"}
                 yMMM{"MMM yyyy"}
-                yMMMEd{"EEE, MMM d, yyyy"}
+                yMMMEd{"E, MMM d, yyyy"}
                 yMMMM{"MMMM yyyy"}
-                yQ{"Q yyyy"}
-                yQQQ{"QQQ yyyy"}
-                yyQ{"Q yy"}
+                yMd{"y/M/d"}
+                yQQQ{"QQQ y"}
+                yQQQQ{"QQQQ y"}
             }
             dayNames{
                 format{
@@ -200,9 +191,9 @@ ak{
         }
     }
     delimiters{
-        alternateQuotationEnd{"”"}
-        alternateQuotationStart{"“"}
-        quotationEnd{"’"}
-        quotationStart{"‘"}
+        alternateQuotationEnd{"’"}
+        alternateQuotationStart{"‘"}
+        quotationEnd{"”"}
+        quotationStart{"“"}
     }
 }

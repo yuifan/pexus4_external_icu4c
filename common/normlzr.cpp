@@ -1,7 +1,7 @@
 /*
  *************************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1996-2010, International Business Machines Corporation and
+ * Copyright (c) 1996-2012, International Business Machines Corporation and
  * others. All Rights Reserved.
  *************************************************************************
  */
@@ -16,6 +16,7 @@
 #include "unicode/schriter.h"
 #include "unicode/uchriter.h"
 #include "unicode/normlzr.h"
+#include "unicode/utf16.h"
 #include "cmemory.h"
 #include "normalizer2impl.h"
 #include "uprops.h"  // for uniset_getUnicode32Instance()
@@ -64,8 +65,6 @@ Normalizer::Normalizer(const Normalizer &copy) :
     init();
 }
 
-static const UChar _NUL=0;
-
 void
 Normalizer::init() {
     UErrorCode errorCode=U_ZERO_ERROR;
@@ -105,12 +104,12 @@ UBool Normalizer::operator==(const Normalizer& that) const
 {
     return
         this==&that ||
-        fUMode==that.fUMode &&
+        (fUMode==that.fUMode &&
         fOptions==that.fOptions &&
         *text==*that.text &&
         buffer==that.buffer &&
         bufferPos==that.bufferPos &&
-        nextIndex==that.nextIndex;
+        nextIndex==that.nextIndex);
 }
 
 //-------------------------------------------------------------------------
@@ -203,7 +202,7 @@ Normalizer::isNormalized(const UnicodeString& source,
 }
 
 UnicodeString & U_EXPORT2
-Normalizer::concatenate(UnicodeString &left, UnicodeString &right,
+Normalizer::concatenate(const UnicodeString &left, const UnicodeString &right,
                         UnicodeString &result,
                         UNormalizationMode mode, int32_t options,
                         UErrorCode &errorCode) {
@@ -262,7 +261,7 @@ UChar32 Normalizer::current() {
 UChar32 Normalizer::next() {
     if(bufferPos<buffer.length() ||  nextNormalize()) {
         UChar32 c=buffer.char32At(bufferPos);
-        bufferPos+=UTF_CHAR_LENGTH(c);
+        bufferPos+=U16_LENGTH(c);
         return c;
     } else {
         return DONE;
@@ -277,7 +276,7 @@ UChar32 Normalizer::next() {
 UChar32 Normalizer::previous() {
     if(bufferPos>0 || previousNormalize()) {
         UChar32 c=buffer.char32At(bufferPos-1);
-        bufferPos-=UTF_CHAR_LENGTH(c);
+        bufferPos-=U16_LENGTH(c);
         return c;
     } else {
         return DONE;

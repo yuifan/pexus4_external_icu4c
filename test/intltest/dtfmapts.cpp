@@ -1,6 +1,6 @@
 /***********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2010, International Business Machines Corporation
+ * Copyright (c) 1997-2011, International Business Machines Corporation
  * and others. All Rights Reserved.
  ***********************************************************************/
 
@@ -108,10 +108,11 @@ void IntlTestDateFormatAPI::TestEquals(void)
     if (!(*a == *b))
         errln("FAIL: DateFormat objects created at different times are unequal.");
 
-    if (b->getDynamicClassID() == SimpleDateFormat::getStaticClassID())
+    SimpleDateFormat *sdtfmt = dynamic_cast<SimpleDateFormat *>(b);
+    if (sdtfmt != NULL)
     {
         double ONE_YEAR = 365*24*60*60*1000.0;
-        ((SimpleDateFormat*)b)->set2DigitYearStart(start + 50*ONE_YEAR, status);
+        sdtfmt->set2DigitYearStart(start + 50*ONE_YEAR, status);
         if (U_FAILURE(status))
             errln("FAIL: setTwoDigitStartDate failed.");
         else if (*a == *b)
@@ -305,14 +306,19 @@ IntlTestDateFormatAPI::TestNameHiding(void) {
         logln("SimpleDateFormat");
         status = U_ZERO_ERROR;
         SimpleDateFormat sdf(status);
-        // Format API
-        sdf.format(dateObj, str, status);
-        sdf.format(dateObj, str, fpos, status);
-        // DateFormat API
-        sdf.format((UDate)0, str, fpos);
-        sdf.format((UDate)0, str);
-        sdf.parse(str, status);
-        sdf.parse(str, ppos);
+        if (U_SUCCESS(status)) {
+            // Format API
+            sdf.format(dateObj, str, status);
+            sdf.format(dateObj, str, fpos, status);
+            // DateFormat API
+            sdf.format((UDate)0, str, fpos);
+            sdf.format((UDate)0, str);
+            sdf.parse(str, status);
+            sdf.parse(str, ppos);
+            sdf.getNumberFormat();
+        } else {
+            dataerrln("FAIL: Can't create SimpleDateFormat() - %s", u_errorName(status));
+        }
     }
 
     // NumberFormat calling Format API

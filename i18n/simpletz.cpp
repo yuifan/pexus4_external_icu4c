@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
- * Copyright (C) 1997-2009, International Business Machines Corporation and    *
- * others. All Rights Reserved.                                                *
+ * Copyright (C) 1997-2012, International Business Machines Corporation and
+ * others. All Rights Reserved.
  *******************************************************************************
  *
  * File SIMPLETZ.H
@@ -20,6 +20,8 @@
  *                           methods that take TimeMode. Whitespace cleanup.
  ********************************************************************************
  */
+
+#include "utypeinfo.h"  // for 'typeid' to work
 
 #include "unicode/utypes.h"
 
@@ -229,7 +231,7 @@ UBool
 SimpleTimeZone::operator==(const TimeZone& that) const
 {
     return ((this == &that) ||
-            (getDynamicClassID() == that.getDynamicClassID() &&
+            (typeid(*this) == typeid(that) &&
             TimeZone::operator==(that) &&
             hasSameRules(that)));
 }
@@ -529,13 +531,13 @@ SimpleTimeZone::getOffsetFromLocal(UDate date, int32_t nonExistingTimeOpt, int32
     // Now we need some adjustment
     if (savingsDST > 0) {
         if ((nonExistingTimeOpt & kStdDstMask) == kStandard
-            || (nonExistingTimeOpt & kStdDstMask) != kDaylight && (nonExistingTimeOpt & kFormerLatterMask) != kLatter) {
+            || ((nonExistingTimeOpt & kStdDstMask) != kDaylight && (nonExistingTimeOpt & kFormerLatterMask) != kLatter)) {
             date -= getDSTSavings();
             recalc = TRUE;
         }
     } else {
         if ((duplicatedTimeOpt & kStdDstMask) == kDaylight
-                || (duplicatedTimeOpt & kStdDstMask) != kStandard && (duplicatedTimeOpt & kFormerLatterMask) == kFormer) {
+                || ((duplicatedTimeOpt & kStdDstMask) != kStandard && (duplicatedTimeOpt & kFormerLatterMask) == kFormer)) {
             date -= getDSTSavings();
             recalc = TRUE;
         }
@@ -741,7 +743,7 @@ UBool
 SimpleTimeZone::hasSameRules(const TimeZone& other) const
 {
     if (this == &other) return TRUE;
-    if (other.getDynamicClassID() != SimpleTimeZone::getStaticClassID()) return FALSE;
+    if (typeid(*this) != typeid(other)) return FALSE;
     SimpleTimeZone *that = (SimpleTimeZone*)&other;
     return rawOffset     == that->rawOffset &&
         useDaylight     == that->useDaylight &&
@@ -1101,7 +1103,7 @@ SimpleTimeZone::initTransitionRules(UErrorCode& status) {
         	return;
         }
         // For now, use ID + "(DST)" as the name
-        dstRule = new AnnualTimeZoneRule(tzid+DST_STR, getRawOffset(), getDSTSavings(),
+        dstRule = new AnnualTimeZoneRule(tzid+UnicodeString(DST_STR), getRawOffset(), getDSTSavings(),
             dtRule, startYear, AnnualTimeZoneRule::MAX_YEAR);
         
         // Check for Null pointer
@@ -1139,7 +1141,7 @@ SimpleTimeZone::initTransitionRules(UErrorCode& status) {
         	return;
         }
         // For now, use ID + "(STD)" as the name
-        stdRule = new AnnualTimeZoneRule(tzid+STD_STR, getRawOffset(), 0,
+        stdRule = new AnnualTimeZoneRule(tzid+UnicodeString(STD_STR), getRawOffset(), 0,
             dtRule, startYear, AnnualTimeZoneRule::MAX_YEAR);
         
         //Check for Null pointer
@@ -1154,10 +1156,10 @@ SimpleTimeZone::initTransitionRules(UErrorCode& status) {
 
         // Create a TimeZoneRule for initial time
         if (firstStdStart < firstDstStart) {
-            initialRule = new InitialTimeZoneRule(tzid+DST_STR, getRawOffset(), dstRule->getDSTSavings());
+            initialRule = new InitialTimeZoneRule(tzid+UnicodeString(DST_STR), getRawOffset(), dstRule->getDSTSavings());
             firstTransition = new TimeZoneTransition(firstStdStart, *initialRule, *stdRule);
         } else {
-            initialRule = new InitialTimeZoneRule(tzid+STD_STR, getRawOffset(), 0);
+            initialRule = new InitialTimeZoneRule(tzid+UnicodeString(STD_STR), getRawOffset(), 0);
             firstTransition = new TimeZoneTransition(firstDstStart, *initialRule, *dstRule);
         }
         // Check for null pointers.

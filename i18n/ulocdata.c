@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *                                                                            *
-* Copyright (C) 2003-2009, International Business Machines                   *
+* Copyright (C) 2003-2012, International Business Machines                   *
 *                Corporation and others. All Rights Reserved.                *
 *                                                                            *
 ******************************************************************************
@@ -100,7 +100,9 @@ U_CAPI USet* U_EXPORT2
 ulocdata_getExemplarSet(ULocaleData *uld, USet *fillIn,
                         uint32_t options, ULocaleDataExemplarSetType extype, UErrorCode *status){
 
-    static const char* const exemplarSetTypes[] = { "ExemplarCharacters", "AuxExemplarCharacters" };
+    static const char* const exemplarSetTypes[] = { "ExemplarCharacters", 
+                                                    "AuxExemplarCharacters", 
+                                                    "ExemplarCharactersIndex"};
     const UChar *exemplarChars = NULL;
     int32_t len = 0;
     UErrorCode localStatus = U_ZERO_ERROR;
@@ -237,7 +239,7 @@ ulocdata_getPaperSize(const char* localeID, int32_t *height, int32_t *width, UEr
 
 }
 
-U_DRAFT void U_EXPORT2
+U_CAPI void U_EXPORT2
 ulocdata_getCLDRVersion(UVersionInfo versionArray, UErrorCode *status) {
     UResourceBundle *rb = NULL;
     rb = ures_openDirect(NULL, "supplementalData", status);
@@ -245,7 +247,7 @@ ulocdata_getCLDRVersion(UVersionInfo versionArray, UErrorCode *status) {
     ures_close(rb);
 }
 
-U_DRAFT int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ulocdata_getLocaleDisplayPattern(ULocaleData *uld,
                                  UChar *result,
                                  int32_t resultCapacity,
@@ -293,7 +295,7 @@ ulocdata_getLocaleDisplayPattern(ULocaleData *uld,
 }
 
 
-U_DRAFT int32_t U_EXPORT2
+U_CAPI int32_t U_EXPORT2
 ulocdata_getLocaleSeparator(ULocaleData *uld,
                             UChar *result,
                             int32_t resultCapacity,

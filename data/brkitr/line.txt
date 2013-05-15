@@ -1,14 +1,16 @@
-# Copyright (c) 2002-2009  International Business Machines Corporation and
+# Copyright (c) 2002-2012  International Business Machines Corporation and
 # others. All Rights Reserved.
 #
 #  file:  line.txt
 #
 #         Line Breaking Rules
 #         Implement default line breaking as defined by 
-#         Unicode Standard Annex #14 Revision 24 for Unicode 5.2
+#         Unicode Standard Annex #14 Revision 29 for Unicode 6.2
 #         http://www.unicode.org/reports/tr14/
-
-
+#
+#         TODO:  Rule LB 8 remains as it was in Unicode 5.2
+#         This is only because of a limitation of ICU break engine implementation,
+#         not because the older behavior is desirable.
 
 #
 #  Character Classes defined by TR 14.
@@ -61,12 +63,14 @@ $BB = [:LineBreak =  Break_Before:];
 $BK = [:LineBreak =  Mandatory_Break:];
 $B2 = [:LineBreak =  Break_Both:];
 $CB = [:LineBreak =  Contingent_Break:];
+$CJ = [:LineBreak =  Conditional_Japanese_Starter:];
 $CL = [:LineBreak =  Close_Punctuation:];
 $CM = [:LineBreak =  Combining_Mark:];
 $CP = [:LineBreak =  Close_Parenthesis:];
 $CR = [:LineBreak =  Carriage_Return:];
 $EX = [:LineBreak =  Exclamation:];
 $GL = [:LineBreak =  Glue:];
+$HL = [:LineBreak =  Hebrew_Letter:];
 $HY = [:LineBreak =  Hyphen:];
 $H2 = [:LineBreak =  H2:];
 $H3 = [:LineBreak =  H3:];
@@ -78,12 +82,13 @@ $JV = [:LineBreak =  JV:];
 $JT = [:LineBreak =  JT:];
 $LF = [:LineBreak =  Line_Feed:];
 $NL = [:LineBreak =  Next_Line:];
-$NS = [:LineBreak =  Nonstarter:];
+$NS = [[:LineBreak =  Nonstarter:] $CJ];
 $NU = [:LineBreak =  Numeric:];
 $OP = [:LineBreak =  Open_Punctuation:];
 $PO = [:LineBreak =  Postfix_Numeric:];
 $PR = [:LineBreak =  Prefix_Numeric:];
 $QU = [:LineBreak =  Quotation:];
+$RI = [:LineBreak =  Regional_Indicator:];
 $SA = [:LineBreak =  Complex_Context:];
 $SG = [:LineBreak =  Surrogate:];
 $SP = [:LineBreak =  Space:];
@@ -119,6 +124,7 @@ $CLcm = $CL $CM*;
 $CPcm = $CP $CM*;
 $EXcm = $EX $CM*;
 $GLcm = $GL $CM*;
+$HLcm = $HL $CM*;
 $HYcm = $HY $CM*;
 $H2cm = $H2 $CM*;
 $H3cm = $H3 $CM*;
@@ -134,6 +140,7 @@ $OPcm = $OP $CM*;
 $POcm = $PO $CM*;
 $PRcm = $PR $CM*;
 $QUcm = $QU $CM*;
+$RIcm = $RI $CM*;
 $SYcm = $SY $CM*;
 $WJcm = $WJ $CM*;
 
@@ -152,6 +159,7 @@ $CL $CM+;
 $CP $CM+;
 $EX $CM+;
 $GL $CM+;
+$HL $CM+;
 $HY $CM+;
 $H2 $CM+;
 $H3 $CM+;
@@ -167,6 +175,7 @@ $OP $CM+;
 $PO $CM+;
 $PR $CM+;
 $QU $CM+;
+$RI $CM+;
 $SY $CM+;
 $WJ $CM+;
 
@@ -188,7 +197,7 @@ $CANT_CM = [ $SP $BK $CR $LF $NL $ZW $CM];       # Bases that can't take CMs
 #            so for this one case we need to manually list out longer sequences.
 #
 $AL_FOLLOW_NOCM = [$BK $CR $LF $NL $ZW $SP];
-$AL_FOLLOW_CM   = [$CL $CP $EX $IS $SY $WJ $GL $OP $QU $BA $HY $NS $IN $NU $ALPlus];
+$AL_FOLLOW_CM   = [$CL $CP $EX $HL $IS $SY $WJ $GL $OP $QU $BA $HY $NS $IN $NU $ALPlus];
 $AL_FOLLOW      = [$AL_FOLLOW_NOCM $AL_FOLLOW_CM];
 
 
@@ -214,6 +223,9 @@ $CM+          [$SP $ZW];
 
 #
 # LB 8         Break after zero width space
+#              TODO:  ZW SP* <break>
+#              An engine change is required to write the reverse rule for this.
+#              For now, leave the Unicode 5.2 rule, ZW <break>
 #
 $LB8Breaks    = [$LB4Breaks $ZW];
 $LB8NonBreaks = [[$LB4NonBreaks] - [$ZW]];
@@ -325,8 +337,13 @@ $LB20NonBreaks $CM* ($BAcm | $HYcm | $NScm);
 $BBcm [^$CB];                                  #  $BB  x
 $BBcm $LB20NonBreaks $CM*;
 
+# LB 21a Don't break after Hebrew + Hyphen
+#   HL (HY | BA) x
+#  
+$HLcm ($HYcm | $BAcm) [^$CB]?;
+
 # LB 22
-$ALcm    $INcm;
+($ALcm | $HLcm) $INcm;
 $CM+     $INcm;     #  by rule 10, any otherwise unattached CM behaves as AL
 $IDcm    $INcm;
 $INcm    $INcm;
@@ -336,15 +353,17 @@ $NUcm    $INcm;
 # $LB 23
 $IDcm  $POcm;
 $ALcm  $NUcm;       # includes $LB19
+$HLcm  $NUcm;
 $CM+   $NUcm;       # Rule 10, any otherwise unattached CM behaves as AL
 $NUcm  $ALcm;
+$NUcm  $HLcm;
 
 #
 # LB 24
 #
 $PRcm $IDcm;
-$PRcm $ALcm;
-$POcm $ALcm;
+$PRcm ($ALcm | $HLcm);
+$POcm ($ALcm | $HLcm);
 
 #
 # LB 25   Numbers.
@@ -365,17 +384,19 @@ $PRcm ($JLcm | $JVcm | $JTcm | $H2cm | $H3cm);
 
 # LB 28   Do not break between alphabetics
 #
-$ALcm $ALcm;
-$CM+ $ALcm;      # The $CM+ is from rule 10, an unattached CM is treated as AL
+($ALcm | $HLcm) ($ALcm | $HLcm);
+$CM+ ($ALcm | $HLcm);      # The $CM+ is from rule 10, an unattached CM is treated as AL
 
 # LB 29
-$IScm $ALcm;
+$IScm ($ALcm | $HLcm);
 
 # LB 30
-($ALcm | $NUcm) $OPcm;
+($ALcm | $HLcm | $NUcm) $OPcm;
 $CM+ $OPcm;         # The $CM+ is from rule 10, an unattached CM is treated as AL.          
-$CPcm ($ALcm | $NUcm);
+$CPcm ($ALcm | $HLcm | $NUcm);
 
+# LB 30a  Do not break between regional indicators.
+$RIcm $RIcm;
 
 #
 #  Reverse Rules.
@@ -392,6 +413,7 @@ $CM+ $CL;
 $CM+ $CP;
 $CM+ $EX;
 $CM+ $GL;
+$CM+ $HL;
 $CM+ $HY;
 $CM+ $H2;
 $CM+ $H3;
@@ -407,6 +429,7 @@ $CM+ $OP;
 $CM+ $PO;
 $CM+ $PR;
 $CM+ $QU;
+$CM+ $RI;
 $CM+ $SY;
 $CM+ $WJ;
 $CM+;
@@ -452,8 +475,10 @@ $LF $CR;
 [$SP $ZW] [$LB4NonBreaks-$CM];
 [$SP $ZW] $CM+ $CAN_CM;
 
-# LB 8 Break after zero width space
-
+# LB 8 ZW SP* <break>
+#     TODO: to implement this, we need more than one look-ahead hard break in play at a time.
+#           Requires an engine enhancement.
+#   / $SP* $ZW
 
 # LB 9,10  Combining marks.
 #    X   $CM needs to behave like X, where X is not $SP or controls.
@@ -547,23 +572,25 @@ $CM* ($BA | $HY | $NS) $CM* [$LB20NonBreaks-$CM];     #  . x (BA | HY | NS)
 $CM* [$LB20NonBreaks-$CM] $CM* $BB;                   #  BB x .
 [^$CB] $CM* $BB;                                      # 
 
+# LB21a
+[^$CB] $CM* ($HY | $BA) $CM* $HL;
 
 
 # LB 22
-$CM* $IN $CM* $ALPlus;
+$CM* $IN $CM* ($ALPlus | $HL);
 $CM* $IN $CM* $ID;
 $CM* $IN $CM* $IN;
 $CM* $IN $CM* $NU;
 
 # LB 23
 $CM* $PO $CM* $ID;
-$CM* $NU $CM* $ALPlus;
-$CM* $ALPlus $CM* $NU;
+$CM* $NU $CM* ($ALPlus | $HL);
+$CM* ($ALPlus | $HL) $CM* $NU;
 
 # LB 24
 $CM* $ID $CM* $PR;
-$CM* $ALPlus $CM* $PR;
-$CM* $ALPlus $CM* $PO;
+$CM* ($ALPlus | $HL) $CM* $PR;
+$CM* ($ALPlus | $HL) $CM* $PO;
 
 
 # LB 25
@@ -580,16 +607,18 @@ $CM* $PO $CM* ($H3 | $H2 | $JT | $JV | $JL);
 $CM* ($H3 | $H2 | $JT | $JV | $JL) $CM* $PR;
 
 # LB 28
-$CM* $ALPlus $CM* $ALPlus;
+$CM* ($ALPlus | $HL) $CM* ($ALPlus | $HL);
 
 
 # LB 29
-$CM* $ALPlus $CM* $IS;
+$CM* ($ALPlus | $HL) $CM* $IS;
 
 # LB 30
-$CM* $OP $CM* ($ALPlus | $NU);
-$CM* ($ALPlus | $NU) $CM* $CP;
+$CM* $OP $CM* ($ALPlus | $HL | $NU);
+$CM* ($ALPlus | $HL | $NU) $CM* $CP;
 
+# LB 30a
+$CM* $RI $CM* $RI;
 
 ## -------------------------------------------------
 
@@ -611,6 +640,9 @@ $SP+ $CM* ($CL | $CP);
 # LB 17
 $SP+ $CM* $B2;
 
+# LB 21
+$CM* ($HY | $BA) $CM* $HL;
+
 # LB 25
 ($CM* ($IS | $SY))+ $CM* $NU;
 ($CL | $CP) $CM* ($NU | $IS | $SY);
@@ -631,6 +663,6 @@ $dictionary $dictionary;
 #  turn off rule chaining.  We don't want to move more
 #  than necessary.
 #
-[$CM $OP $QU $CL $CP $B2 $PR $HY $SP $dictionary]+ [^$CM $OP $QU $CL $CP $B2 $PR $HY $dictionary];
+[$CM $OP $QU $CL $CP $B2 $PR $HY $BA $SP $dictionary]+ [^$CM $OP $QU $CL $CP $B2 $PR $HY $BA $dictionary];
 $dictionary $dictionary;
 

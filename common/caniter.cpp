@@ -1,6 +1,6 @@
 /*
  *****************************************************************************
- * Copyright (C) 1996-2010, International Business Machines Corporation and  *
+ * Copyright (C) 1996-2011, International Business Machines Corporation and  *
  * others. All Rights Reserved.                                              *
  *****************************************************************************
  */
@@ -9,15 +9,16 @@
 
 #if !UCONFIG_NO_NORMALIZATION
 
-#include "unicode/uset.h"
+#include "unicode/caniter.h"
+#include "unicode/normalizer2.h"
+#include "unicode/uchar.h"
+#include "unicode/uniset.h"
+#include "unicode/usetiter.h"
 #include "unicode/ustring.h"
+#include "unicode/utf16.h"
+#include "cmemory.h"
 #include "hash.h"
 #include "normalizer2impl.h"
-#include "unormimp.h"
-#include "unicode/caniter.h"
-#include "unicode/normlzr.h"
-#include "unicode/uchar.h"
-#include "cmemory.h"
 
 /**
  * This class allows one to iterate through all the strings that are canonically equivalent to a given
@@ -70,9 +71,10 @@ CanonicalIterator::CanonicalIterator(const UnicodeString &sourceStr, UErrorCode 
     pieces_lengths(NULL),
     current(NULL),
     current_length(0),
-    nfd(*Normalizer2Factory::getNFDInstance(status))
+    nfd(*Normalizer2Factory::getNFDInstance(status)),
+    nfcImpl(*Normalizer2Factory::getNFCImpl(status))
 {
-    if(U_SUCCESS(status)) {
+    if(U_SUCCESS(status) && nfcImpl.ensureCanonIterData(status)) {
       setSource(sourceStr, status);
     }
 }
@@ -168,7 +170,7 @@ void CanonicalIterator::setSource(const UnicodeString &newSource, UErrorCode &st
     int32_t i = 0;
     UnicodeString *list = NULL;
 
-    Normalizer::normalize(newSource, UNORM_NFD, 0, source, status);
+    nfd.normalize(newSource, source, status);
     if(U_FAILURE(status)) {
       return;
     }
@@ -206,16 +208,16 @@ void CanonicalIterator::setSource(const UnicodeString &newSource, UErrorCode &st
 
     // i should initialy be the number of code units at the 
     // start of the string
-    i = UTF16_CHAR_LENGTH(source.char32At(0));
+    i = U16_LENGTH(source.char32At(0));
     //int32_t i = 1;
     // find the segments
     // This code iterates through the source string and 
     // extracts segments that end up on a codepoint that
     // doesn't start any decompositions. (Analysis is done
     // on the NFD form - see above).
-    for (; i < source.length(); i += UTF16_CHAR_LENGTH(cp)) {
+    for (; i < source.length(); i += U16_LENGTH(cp)) {
         cp = source.char32At(i);
-        if (unorm_isCanonSafeStart(cp)) {
+        if (nfcImpl.isCanonSegmentStarter(cp)) {
             source.extract(start, i-start, list[list_length++]); // add up to i
             start = i;
         }
@@ -287,9 +289,9 @@ void U_EXPORT2 CanonicalIterator::permute(UnicodeString &source, UBool skipZeros
     if(U_FAILURE(status)) {
         return;
     }
-    subpermute.setValueDeleter(uhash_deleteUnicodeString);
+    subpermute.setValueDeleter(uprv_deleteUObject);
 
-    for (i = 0; i < source.length(); i += UTF16_CHAR_LENGTH(cp)) {
+    for (i = 0; i < source.length(); i += U16_LENGTH(cp)) {
         cp = source.char32At(i);
         const UHashElement *ne = NULL;
         int32_t el = -1;
@@ -307,7 +309,7 @@ void U_EXPORT2 CanonicalIterator::permute(UnicodeString &source, UBool skipZeros
 
         // see what the permutations of the characters before and after this one are
         //Hashtable *subpermute = permute(source.substring(0,i) + source.substring(i + UTF16.getCharCount(cp)));
-        permute(subPermuteString.replace(i, UTF16_CHAR_LENGTH(cp), NULL, 0), skipZeros, &subpermute, status);
+        permute(subPermuteString.replace(i, U16_LENGTH(cp), NULL, 0), skipZeros, &subpermute, status);
         /* Test for buffer overflows */
         if(U_FAILURE(status)) {
             return;
@@ -344,9 +346,9 @@ UnicodeString* CanonicalIterator::getEquivalents(const UnicodeString &segment, i
     if (U_FAILURE(status)) {
         return 0;
     }
-    result.setValueDeleter(uhash_deleteUnicodeString);
-    permutations.setValueDeleter(uhash_deleteUnicodeString);
-    basic.setValueDeleter(uhash_deleteUnicodeString);
+    result.setValueDeleter(uprv_deleteUObject);
+    permutations.setValueDeleter(uprv_deleteUObject);
+    basic.setValueDeleter(uprv_deleteUObject);
 
     UChar USeg[256];
     int32_t segLen = segment.extract(USeg, 256, status);
@@ -377,7 +379,7 @@ UnicodeString* CanonicalIterator::getEquivalents(const UnicodeString &segment, i
             //UnicodeString *possible = new UnicodeString(*((UnicodeString *)(ne2->value.pointer)));
             UnicodeString possible(*((UnicodeString *)(ne2->value.pointer)));
             UnicodeString attempt;
-            Normalizer::normalize(possible, UNORM_NFD, 0, attempt, status);
+            nfd.normalize(possible, attempt, status);
 
             // TODO: check if operator == is semanticaly the same as attempt.equals(segment)
             if (attempt==segment) {
@@ -437,28 +439,29 @@ Hashtable *CanonicalIterator::getEquivalents2(Hashtable *fillinResult, const UCh
 
     fillinResult->put(toPut, new UnicodeString(toPut), status);
 
-    USerializedSet starts;
+    UnicodeSet starts;
 
     // cycle through all the characters
-    UChar32 cp, end = 0;
-    int32_t i = 0, j;
-    for (i = 0; i < segLen; i += UTF16_CHAR_LENGTH(cp)) {
+    UChar32 cp;
+    for (int32_t i = 0; i < segLen; i += U16_LENGTH(cp)) {
         // see if any character is at the start of some decomposition
-        UTF_GET_CHAR(segment, 0, i, segLen, cp);
-        if (!unorm_getCanonStartSet(cp, &starts)) {
+        U16_GET(segment, 0, i, segLen, cp);
+        if (!nfcImpl.getCanonStartSet(cp, starts)) {
             continue;
         }
-        // if so, see which decompositions match 
-        for(j = 0, cp = end+1; cp <= end || uset_getSerializedRange(&starts, j++, &cp, &end); ++cp) {
+        // if so, see which decompositions match
+        UnicodeSetIterator iter(starts);
+        while (iter.next()) {
+            UChar32 cp2 = iter.getCodepoint();
             Hashtable remainder(status);
-            remainder.setValueDeleter(uhash_deleteUnicodeString);
-            if (extract(&remainder, cp, segment, segLen, i, status) == NULL) {
+            remainder.setValueDeleter(uprv_deleteUObject);
+            if (extract(&remainder, cp2, segment, segLen, i, status) == NULL) {
                 continue;
             }
 
             // there were some matches, so add all the possibilities to the set.
             UnicodeString prefix(segment, i);
-            prefix += cp;
+            prefix += cp2;
 
             int32_t el = -1;
             const UHashElement *ne = remainder.nextElement(el);

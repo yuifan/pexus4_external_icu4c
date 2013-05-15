@@ -1,9 +1,11 @@
 /*
 *******************************************************************************
-* Copyright (C) 2007-2008, International Business Machines Corporation and    *
-* others. All Rights Reserved.                                                *
+* Copyright (C) 2007-2012, International Business Machines Corporation and
+* others. All Rights Reserved.
 *******************************************************************************
 */
+
+#include "utypeinfo.h"  // for 'typeid' to work
 
 #include "unicode/utypes.h"
 
@@ -88,7 +90,7 @@ RuleBasedTimeZone::operator==(const TimeZone& that) const {
     if (this == &that) {
         return TRUE;
     }
-    if (getDynamicClassID() != that.getDynamicClassID()
+    if (typeid(*this) != typeid(that)
         || BasicTimeZone::operator==(that) == FALSE) {
         return FALSE;
     }
@@ -113,8 +115,8 @@ RuleBasedTimeZone::addTransitionRule(TimeZoneRule* rule, UErrorCode& status) {
     if (U_FAILURE(status)) {
         return;
     }
-    if (rule->getDynamicClassID() == AnnualTimeZoneRule::getStaticClassID()
-        && ((AnnualTimeZoneRule*)rule)->getEndYear() == AnnualTimeZoneRule::MAX_YEAR) {
+    AnnualTimeZoneRule* atzrule = dynamic_cast<AnnualTimeZoneRule*>(rule);
+    if (atzrule != NULL && atzrule->getEndYear() == AnnualTimeZoneRule::MAX_YEAR) {
         // A final rule
         if (fFinalRules == NULL) {
             fFinalRules = new UVector(status);
@@ -426,8 +428,10 @@ RuleBasedTimeZone::getOffsetInternal(UDate date, UBool local,
             if (date > tend) {
                 if (fFinalRules != NULL) {
                     rule = findRuleInFinal(date, local, NonExistingTimeOpt, DuplicatedTimeOpt);
-                } else {
-                    // no final rule, use the last rule
+                }
+                if (rule == NULL) {
+                    // no final rules or the given time is before the first transition
+                    // specified by the final rules -> use the last rule 
                     rule = ((Transition*)fHistoricTransitions->elementAt(idx))->to;
                 }
             } else {
@@ -506,7 +510,7 @@ RuleBasedTimeZone::hasSameRules(const TimeZone& other) const {
     if (this == &other) {
         return TRUE;
     }
-    if (getDynamicClassID() != other.getDynamicClassID()) {
+    if (typeid(*this) != typeid(other)) {
         return FALSE;
     }
     const RuleBasedTimeZone& that = (const RuleBasedTimeZone&)other;
@@ -699,12 +703,17 @@ RuleBasedTimeZone::findRuleInFinal(UDate date, UBool local,
     }
     UBool avail1 = fr1->getPreviousStart(base, fr0->getRawOffset(), fr0->getDSTSavings(), TRUE, start1);
 
-    if (avail0 && (!avail1 || start0 > start1)) {
-        return fr0;
-    } else if (avail1) {
-        return fr1;
+    if (!avail0 || !avail1) {
+        if (avail0) {
+            return fr0;
+        } else if (avail1) {
+            return fr1;
+        }
+        // Both rules take effect after the given time
+        return NULL;
     }
-    return NULL;
+
+    return (start0 > start1) ? fr0 : fr1;
 }
 
 UBool

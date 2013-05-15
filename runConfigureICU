@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 1999-2009, International Business Machines Corporation and
+# Copyright (c) 1999-2012, International Business Machines Corporation and
 # others. All Rights Reserved.
 
 # runConfigureICU: This script will run the "configure" script for the appropriate platform
@@ -43,6 +43,7 @@ The following names can be supplied as the argument for platform:
     Linux/ICC           Use the Intel ICC compiler on Linux
     Linux/VA            Use the IBM Visual Age compiler on Power PC Linux
     MacOSX              Use the GNU gcc/g++ compilers on MacOS X (Darwin)
+    MinGW               Use the GNU gcc/g++ compilers on MinGW
     QNX                 Use the QNX QCC compiler on QNX/Neutrino
     Solaris             Use the Sun cc/CC compilers on Solaris
     Solaris/GCC         Use the GNU gcc/g++ compilers on Solaris
@@ -140,13 +141,15 @@ case $platform in
         THE_COMP="the GNU C++"
         CC=gcc; export CC
         CXX=g++; export CXX
+        DEBUG_CFLAGS='-g -O0'
+        DEBUG_CXFLAGS='-g -O0'
         ;;
     Solaris)
         THE_OS=SOLARIS
         THE_COMP="Sun's CC"
         CC=`which cc`; export CC
         CXX=`which CC`; export CXX
-        RELEASE_CFLAGS="-xO4 -xlibmil"
+        RELEASE_CFLAGS="-xO1 -xlibmil"
         RELEASE_CXXFLAGS="-O4 -xlibmil"
         ;;
     Solaris/GCC)
@@ -155,14 +158,14 @@ case $platform in
         CC=gcc; export CC
         CXX=g++; export CXX
         RELEASE_CFLAGS=-O1
-        RELEASE_CXXFLAGS=-O3
+        RELEASE_CXXFLAGS=-O2
         ;;
     SolarisX86)
         THE_OS="SOLARIS X86"
         THE_COMP="Sun's CC"
         CC=`which cc`; export CC
         CXX=`which CC`; export CXX
-        LDFLAGS="-L -lCrun";export LDFLAGS
+        LDFLAGS="${LDFLAGS} -lCrun";export LDFLAGS
         RELEASE_CFLAGS=-xO3
         RELEASE_CXXFLAGS=-O3
         ;;
@@ -177,10 +180,13 @@ case $platform in
     IBMi)
         THE_OS="IBM i"
         THE_COMP="the iCC C++"
-        CC=/usr/bin/icc; export CC
-        CXX=/usr/bin/icc; export CXX
+        CC=icc; export CC
+        CXX=icc; export CXX
         CPP="$CC -c -qpponly"; export CPP
-        MAKE=/usr/bin/gmake; export MAKE
+        MAKE=gmake; export MAKE
+        U_MAKE=gmake; export U_MAKE
+        # gmake is a .pgm and may not be on the path.  Don't use a full path, just use gmake.
+        ac_cv_path_U_MAKE=gmake; export ac_cv_path_U_MAKE
         RELEASE_CFLAGS='-O4'
         RELEASE_CXXFLAGS='-O4'
         ;;
@@ -221,8 +227,8 @@ case $platform in
     Linux*)
         THE_OS="Linux"
         THE_COMP="the GNU C++"
-        CC=gcc; export CC
-        CXX=g++; export CXX
+        DEBUG_CFLAGS='-g -O0'
+        DEBUG_CXFLAGS='-g -O0'
         ;;
     Cygwin)
         THE_OS="Cygwin"
@@ -269,12 +275,22 @@ case $platform in
         THE_COMP="the GNU C++"
         RELEASE_CFLAGS='-O2'
         RELEASE_CXXFLAGS='-O2'
+        DEBUG_CFLAGS='-g -O0'
+        DEBUG_CXXFLAGS='-g -O0'
+        ;;
+    MinGW)
+        THE_OS="MinGW"
+        THE_COMP="the GNU C++"
+        RELEASE_CFLAGS='-O3'
+        RELEASE_CXXFLAGS='-O3'
         ;;
     *BSD)
         THE_OS="BSD"
         THE_COMP="the GNU C++"
         CC=gcc; export CC
         CXX=g++; export CXX
+        DEBUG_CFLAGS='-g -O0'
+        DEBUG_CXFLAGS='-g -O0'
         ;;
     TRU64V5.1/CXX)
         THE_OS="OSF1"
@@ -291,10 +307,10 @@ case $platform in
     zOS)
         THE_OS="z/OS (OS/390)"
         THE_COMP="z/OS C/C++"
-        CC=cc; export CC
-        CXX=cxx; export CXX
-        RELEASE_CFLAGS="-2 -Wc,'inline(auto,noreport,500,4000)'"
-        RELEASE_CXXFLAGS="-2 -Wc,'inline(auto,noreport,500,4000)'"
+        CC=xlc; export CC
+        CXX=xlC; export CXX
+        RELEASE_CFLAGS="-O2 -Wc,'inline(AUTO,NOREPORT,1000,8000)'"
+        RELEASE_CXXFLAGS="-O2 -Wc,'inline(AUTO,NOREPORT,1000,8000)'"
         ;;
     zOSV1R2)
         THE_OS="z/OS 1.2"
@@ -306,8 +322,8 @@ case $platform in
         export LDFLAGS="-Wl,'compat=pm3'"
         export CFLAGS="-Wc,'target(zOSV1R2)'"
         export CXXFLAGS="-Wc,'target(zOSV1R2)'"
-        export RELEASE_CFLAGS="-2 -Wc,'inline(auto,noreport,500,4000)'"
-        export RELEASE_CXXFLAGS="-2 -Wc,'inline(auto,noreport,500,4000)'"
+        RELEASE_CFLAGS="-2 -Wc,'inline(auto,noreport,500,4000)'"
+        RELEASE_CXXFLAGS="-2 -Wc,'inline(auto,noreport,500,4000)'"
         ;;
     *)
         >&2 echo "$me: unrecognized platform \"$platform\" (use --help for help)"
@@ -371,6 +387,7 @@ export LDFLAGS
 
 # Run configure
 
+echo "export CPP=$CPP CC=$CC CXX=$CXX CPPFLAGS=$CPPFLAGS CFLAGS=$CFLAGS CXXFLAGS=$CXXFLAGS LDFLAGS=$LDFLAGS MAKE=$MAKE"
 echo "Running ./configure $OPTS $@ for $THE_OS using $THE_COMP compiler"
 echo
 if $configure $OPTS $@
@@ -383,4 +400,3 @@ else
 	echo $0: ./configure failed
 	exit 1
 fi
-

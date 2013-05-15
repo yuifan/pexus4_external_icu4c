@@ -1,6 +1,6 @@
 /*
  ******************************************************************************
- *   Copyright (C) 1996-2009, International Business Machines                 *
+ *   Copyright (C) 1996-2012, International Business Machines                 *
  *   Corporation and others.  All Rights Reserved.                            *
  ******************************************************************************
  */
@@ -29,6 +29,7 @@
 #include "ucln_in.h"
 #include "ucol_imp.h"
 #include "umutex.h"
+#include "uassert.h"
 
 #include "unicode/colldata.h"
 
@@ -161,7 +162,7 @@ uint32_t CEList::get(int32_t index) const
         return ces[index];
     }
 
-    return UCOL_NULLORDER;
+    return (uint32_t)UCOL_NULLORDER;
 }
 
 uint32_t &CEList::operator[](int32_t index) const
@@ -234,10 +235,14 @@ void StringList::add(const UnicodeString *string, UErrorCode &status)
 
     if (listSize >= listMax) {
         int32_t newMax = listMax + STRING_LIST_BUFFER_SIZE;
-
         UnicodeString *newStrings = new UnicodeString[newMax];
-
-        uprv_memcpy(newStrings, strings, listSize * sizeof(UnicodeString));
+        if (newStrings == NULL) {
+            status = U_MEMORY_ALLOCATION_ERROR;
+            return;
+        }
+        for (int32_t i=0; i<listSize; ++i) {
+            newStrings[i] = strings[i];
+        }
 
 #ifdef INSTRUMENT_STRING_LIST
         int32_t _h = listSize / STRING_LIST_BUFFER_SIZE;
@@ -282,7 +287,41 @@ int32_t StringList::size() const
 }
 
 
-U_CFUNC void deleteStringList(void *obj);
+U_CDECL_BEGIN
+static void U_CALLCONV
+deleteStringList(void *obj)
+{
+    StringList *strings = (StringList *) obj;
+
+    delete strings;
+}
+static void U_CALLCONV
+deleteCEList(void *obj)
+{
+    CEList *list = (CEList *) obj;
+
+    delete list;
+}
+
+static void U_CALLCONV
+deleteUnicodeStringKey(void *obj)
+{
+    UnicodeString *key = (UnicodeString *) obj;
+
+    delete key;
+}
+
+static void U_CALLCONV
+deleteChars(void * /*obj*/)
+{
+    // char *chars = (char *) obj;
+    // All the key strings are owned by the
+    // CollData objects and don't need to
+    // be freed here.
+  //DELETE_ARRAY(chars);
+}
+
+U_CDECL_END
 
 class CEToStringsMap : public UMemory
 {
@@ -351,16 +390,6 @@ void CEToStringsMap::putStringList(uint32_t ce, StringList *stringList, UErrorCo
     uhash_iput(map, ce, (void *) stringList, &status);
 }
 
-U_CFUNC void deleteStringList(void *obj)
-{
-    StringList *strings = (StringList *) obj;
-
-    delete strings;
-}
-
-U_CFUNC void deleteCEList(void *obj);
-U_CFUNC void deleteUnicodeStringKey(void *obj);
-
 class StringToCEsMap : public UMemory
 {
 public:
@@ -412,20 +441,6 @@ const CEList *StringToCEsMap::get(const UnicodeString *string)
     return (const CEList *) uhash_get(map, string);
 }
 
-U_CFUNC void deleteCEList(void *obj)
-{
-    CEList *list = (CEList *) obj;
-
-    delete list;
-}
-
-U_CFUNC void deleteUnicodeStringKey(void *obj)
-{
-    UnicodeString *key = (UnicodeString *) obj;
-
-    delete key;
-}
-
 class CollDataCacheEntry : public UMemory
 {
 public:
@@ -463,28 +478,22 @@ private:
     static char *getKey(UCollator *collator, char *keyBuffer, int32_t *charBufferLength);
     static void deleteKey(char *key);
 
-    UMTX lock;
     UHashtable *cache;
 };
+static UMutex lock = U_MUTEX_INITIALIZER;
 
-U_CFUNC void deleteChars(void * /*obj*/)
-{
-    // char *chars = (char *) obj;
-    // All the key strings are owned by the
-    // CollData objects and don't need to
-    // be freed here.
-  //DELETE_ARRAY(chars);
-}
-
-U_CFUNC void deleteCollDataCacheEntry(void *obj)
+U_CDECL_BEGIN
+static void U_CALLCONV
+deleteCollDataCacheEntry(void *obj)
 {
     CollDataCacheEntry *entry = (CollDataCacheEntry *) obj;
 
     delete entry;
 }
+U_CDECL_END
 
 CollDataCache::CollDataCache(UErrorCode &status)
-    : lock(0), cache(NULL)
+    : cache(NULL)
 {
     if (U_FAILURE(status)) {
         return;
@@ -506,8 +515,6 @@ CollDataCache::~CollDataCache()
     uhash_close(cache);
     cache = NULL;
     umtx_unlock(&lock);
-
-    umtx_destroy(&lock);
 }
 
 CollData *CollDataCache::get(UCollator *collator, UErrorCode &status)
@@ -891,6 +898,7 @@ int32_t CollData::minLengthInChars(const CEList *ceList, int32_t offset, int32_t
 #endif
 
             if (ceList->matchesAt(offset, ceList2)) {
+                U_ASSERT(ceList2 != NULL);
                 int32_t clength = ceList2->size();
                 int32_t slength = string->length();
                 int32_t roffset = offset + clength;

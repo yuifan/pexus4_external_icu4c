@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1997-2010, International Business Machines
+*   Copyright (C) 1997-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -32,7 +32,6 @@
 #include "decContext.h"
 #include "decNumber.h"
 #include "cmemory.h"
-#include "decnumstr.h"
 
 // Decimal digits in a 64-bit int
 #define INT64_DIGITS 19
@@ -51,19 +50,25 @@ typedef enum EDigitListValues {
 
 U_NAMESPACE_BEGIN
 
-// Export an explicit template instantiation of the MaybeStackArray that
+class CharString;
+
+// Export an explicit template instantiation of the MaybeStackHeaderAndArray that
 //    is used as a data member of DigitList.
 //
 //    MSVC requires this, even though it should not be necessary. 
-//    No direct access to the MaybeStackArray leaks out of the i18n library.
+//    No direct access to the MaybeStackHeaderAndArray leaks out of the i18n library.
 //
 //    Macintosh produces duplicate definition linker errors with the explicit template
 //    instantiation.
 //
-#if !defined(U_DARWIN)
-template class U_I18N_API MaybeStackArray<char, sizeof(decNumber) + DEFAULT_DIGITS>;
+#if !U_PLATFORM_IS_DARWIN_BASED
+template class U_I18N_API MaybeStackHeaderAndArray<decNumber, char, DEFAULT_DIGITS>;
 #endif
 
+
+enum EStackMode { kOnStack };
+
+enum EFastpathBits { kFastpathOk = 1, kNoDecimal = 2 };
 
 /**
  * Digit List is actually a Decimal Floating Point number.
@@ -112,7 +117,7 @@ template class U_I18N_API MaybeStackArray<char, sizeof(decNumber) + DEFAULT_DIGI
  *
  *       digitList exponent = decNumber exponent + digit count
  *
- *    digitList, digits are chars, '0' - '9'
+ *    digitList, digits are platform invariant chars, '0' - '9'
  *    decNumber, digits are binary, one per byte, 0 - 9.
  *
  *       (decNumber library is configurable in how digits are stored, ICU has configured
@@ -147,7 +152,7 @@ public:
     int32_t  compare(const DigitList& other);
 
 
-    inline UBool operator!=(const DigitList& other) const { return !operator==(other); };
+    inline UBool operator!=(const DigitList& other) const { return !operator==(other); }
 
     /**
      * Clears out the digits.
@@ -173,6 +178,7 @@ public:
      *              inefficient, and the interaction with the exponent value is confusing.
      *              Best avoided.
      *              TODO:  remove this function once all use has been replaced.
+     *              TODO:  describe alternative to append()
      * @param digit The digit to be appended.
      */
     void append(char digit);
@@ -202,8 +208,8 @@ public:
 
     /**
      *  Utility routine to get the value of the digit list as a decimal string.
-     */  
-    void getDecimal(DecimalNumberString &str, UErrorCode &status);
+     */
+    void getDecimal(CharString &str, UErrorCode &status);
 
     /**
      * Return true if the number represented by this object can fit into
@@ -245,12 +251,22 @@ public:
      */
     void set(int64_t source);
 
+    /**
+     * Utility routine to set the value of the digit list from an int64.
+     * Does not set the decnumber unless requested later
+     * If a non-zero maximumDigits is specified, no more than that number of
+     * significant digits will be produced.
+     * @param source The value to be set
+     */
+    void setInteger(int64_t source);
+
    /**
      * Utility routine to set the value of the digit list from a decimal number
      * string.
      * @param source The value to be set.  The string must be nul-terminated.
+     * @param fastpathBits special flags for fast parsing
      */
-    void set(const StringPiece &source, UErrorCode &status);
+    void set(const StringPiece &source, UErrorCode &status, uint32_t fastpathBits = 0);
 
     /**
      * Multiply    this = this * arg
@@ -277,9 +293,9 @@ public:
     /** Test for a Nan
      * @return  TRUE if the number is a NaN
      */
-    UBool isNaN(void) const {return decNumberIsNaN(fDecNumber);};
+    UBool isNaN(void) const {return decNumberIsNaN(fDecNumber);}
 
-    UBool isInfinite() const {return decNumberIsInfinite(fDecNumber);};
+    UBool isInfinite() const {return decNumberIsInfinite(fDecNumber);}
 
     /**  Reduce, or normalize.  Removes trailing zeroes, adjusts exponent appropriately. */
     void     reduce();
@@ -288,10 +304,10 @@ public:
     void     trim();
 
     /** Set to zero */
-    void     setToZero() {uprv_decNumberZero(fDecNumber);};
+    void     setToZero() {uprv_decNumberZero(fDecNumber);}
 
     /** get the number of digits in the decimal number */
-    int32_t  digits() const {return fDecNumber->digits;};
+    int32_t  digits() const {return fDecNumber->digits;}
 
     /**
      * Round the number to the given number of digits.
@@ -308,7 +324,7 @@ public:
      */
     void  ensureCapacity(int32_t  requestedSize, UErrorCode &status); 
 
-    UBool    isPositive(void) const { return decNumberIsNegative(fDecNumber) == 0;};
+    UBool    isPositive(void) const { return decNumberIsNegative(fDecNumber) == 0;}
     void     setPositive(UBool s); 
 
     void     setDecimalAt(int32_t d);
@@ -317,8 +333,28 @@ public:
     void     setCount(int32_t c);
     int32_t  getCount() const;
     
+    /**
+     * Set the digit in platform (invariant) format, from '0'..'9'
+     * @param i index of digit
+     * @param v digit value, from '0' to '9' in platform invariant format
+     */
     void     setDigit(int32_t i, char v);
+
+    /**
+     * Get the digit in platform (invariant) format, from '0'..'9' inclusive
+     * @param i index of digit
+     * @return invariant format of the digit
+     */
     char     getDigit(int32_t i);
+
+
+    /**
+     * Get the digit's value, as an integer from 0..9 inclusive.
+     * Note that internally this value is a decNumberUnit, but ICU configures it to be a uint8_t.
+     * @param i index of digit
+     * @return value of that digit
+     */
+    uint8_t     getDigitValue(int32_t i);
 
 
 private:
@@ -350,22 +386,60 @@ private:
      * DecimalFormat::ERoundingMode    fRoundingMode;
      */
 
-private:
+public:
+    decContext    fContext;   // public access to status flags.  
 
-    decContext    fContext;
+private:
     decNumber     *fDecNumber;
-    MaybeStackArray<char, sizeof(decNumber) + DEFAULT_DIGITS>  fStorage;
-    
+    MaybeStackHeaderAndArray<decNumber, char, DEFAULT_DIGITS>  fStorage;
+
     /* Cached double value corresponding to this decimal number.
      * This is an optimization for the formatting implementation, which may
      * ask for the double value multiple times.
      */
-    double        fDouble;
-    UBool         fHaveDouble;
+    union DoubleOrInt64 {
+      double        fDouble;
+      int64_t       fInt64;
+    } fUnion;
+    enum EHave {
+      kNone=0,
+      kDouble,
+      kInt64
+    } fHave;
 
 
 
     UBool shouldRoundUp(int32_t maximumDigits) const;
+
+ public:
+
+    using UMemory::operator new;
+    using UMemory::operator delete;
+
+    /**
+     * Placement new for stack usage
+     * @internal
+     */
+    static inline void * U_EXPORT2 operator new(size_t /*size*/, void * onStack, EStackMode  /*mode*/) U_NO_THROW { return onStack; }
+
+    /**
+     * Placement delete for stack usage
+     * @internal
+     */
+    static inline void U_EXPORT2 operator delete(void * /*ptr*/, void * /*onStack*/, EStackMode /*mode*/)  U_NO_THROW {}
+
+ private:
+    inline void internalSetDouble(double d) {
+      fHave = kDouble;
+      fUnion.fDouble=d;
+    }
+    inline void internalSetInt64(int64_t d) {
+      fHave = kInt64;
+      fUnion.fInt64=d;
+    }
+    inline void internalClear() {
+      fHave = kNone;
+    }
 };
 
 

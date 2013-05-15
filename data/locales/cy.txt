@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/cy.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/cy.xml
 // *
 // ***************************************************************************
 /**
@@ -19,18 +19,18 @@ cy{
     LocaleScript{
         "Latn",
     }
-    Version{"2.0.47.68"}
+    Version{"2.0.78.38"}
     calendar{
         gregorian{
             DateTimePatterns{
-                "h:mm:ss a zzzz",
-                "h:mm:ss a z",
-                "h:mm:ss a",
-                "h:mm a",
-                "EEEE, y MMMM dd",
-                "y MMMM d",
-                "y MMM d",
-                "yyyy-MM-dd",
+                "HH:mm:ss zzzz",
+                "HH:mm:ss z",
+                "HH:mm:ss",
+                "HH:mm",
+                "EEEE, d MMMM y",
+                "d MMMM y",
+                "d MMM y",
+                "dd/MM/yyyy",
                 "{1} {0}",
                 "{1} {0}",
                 "{1} {0}",
@@ -38,7 +38,16 @@ cy{
                 "{1} {0}",
             }
             availableFormats{
+                MEd{"E, d/M"}
+                MMMEd{"E, d MMM"}
+                MMMd{"d MMM"}
                 Md{"d/M"}
+                yM{"M/y"}
+                yMEd{"E, d/M/y"}
+                yMMM{"MMM y"}
+                yMMMEd{"E, d MMM y"}
+                yMMMd{"d MMM y"}
+                yMd{"d/M/y"}
             }
             dayNames{
                 format{
@@ -50,6 +59,15 @@ cy{
                         "Iau",
                         "Gwen",
                         "Sad",
+                    }
+                    narrow{
+                        "S",
+                        "L",
+                        "M",
+                        "M",
+                        "I",
+                        "G",
+                        "S",
                     }
                     wide{
                         "Dydd Sul",
@@ -99,12 +117,6 @@ cy{
             fields{
                 day{
                     dn{"Dydd"}
-                    relative{
-                        "-2"{"Echdoe"}
-                        "-3"{"Dridiau yn ôl"}
-                        "2"{"Drennydd"}
-                        "3"{"Ymhen tridiau"}
-                    }
                 }
                 dayperiod{
                     dn{"AM/PM"}
@@ -157,7 +169,7 @@ cy{
                 }
                 MMMd{
                     M{"d MMM – d MMM"}
-                    d{"MMM d–d"}
+                    d{"d–d MMM"}
                 }
                 Md{
                     M{"d/M – d/M"}
@@ -207,8 +219,8 @@ cy{
                     y{"E, d MMM, y - E, d MMM, y"}
                 }
                 yMMMM{
-                    M{"yyyy-MM – MM"}
-                    y{"yyyy-MM – yyyy-MM"}
+                    M{"MMMM–MMMM y"}
+                    y{"MMMM y – MMMM y"}
                 }
                 yMMMd{
                     M{"d MMM - d MMM, y"}
@@ -237,6 +249,20 @@ cy{
                         "Tach",
                         "Rhag",
                     }
+                    narrow{
+                        "I",
+                        "C",
+                        "M",
+                        "E",
+                        "M",
+                        "M",
+                        "G",
+                        "A",
+                        "M",
+                        "H",
+                        "T",
+                        "R",
+                    }
                     wide{
                         "Ionawr",
                         "Chwefror",
@@ -244,7 +270,7 @@ cy{
                         "Ebrill",
                         "Mai",
                         "Mehefin",
-                        "Gorffenaf",
+                        "Gorffennaf",
                         "Awst",
                         "Medi",
                         "Hydref",

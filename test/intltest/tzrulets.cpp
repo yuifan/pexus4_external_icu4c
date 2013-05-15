@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2007-2010, International Business Machines Corporation and    *
+* Copyright (C) 2007-2012, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 */
@@ -30,7 +30,7 @@
 #define CASE(id,test) case id: name = #test; if (exec) { logln(#test "---"); logln((UnicodeString)""); test(); } break
 #define HOUR (60*60*1000)
 
-static const UVersionInfo ICU_45 = {4,5,0,0};
+static const UVersionInfo ICU_453 = {4,5,3,0};
 
 static const char *const TESTZIDS[] = {
         "AGT",
@@ -47,6 +47,11 @@ static const char *const TESTZIDS[] = {
         "Australia/Sydney",
         "Etc/GMT+8"
 };
+
+static UBool hasEquivalentTransitions(/*const*/ BasicTimeZone& tz1, /*const*/BasicTimeZone& tz2,
+                                        UDate start, UDate end,
+                                        UBool ignoreDstAmount, int32_t maxTransitionTimeDelta,
+                                        UErrorCode& status);
 
 class TestZIDEnumeration : public StringEnumeration {
 public:
@@ -135,6 +140,7 @@ void TimeZoneRuleTest::runIndexedTest( int32_t index, UBool exec, const char* &n
         CASE(14, TestT6216);
         CASE(15, TestT6669);
         CASE(16, TestVTimeZoneWrapper);
+        CASE(17, TestT8943);
         default: name = ""; break;
     }
 }
@@ -786,12 +792,6 @@ TimeZoneRuleTest::TestVTimeZoneRoundTrip(void) {
             errln("FAIL: error returned while enumerating timezone IDs.");
             break;
         }
-        if (!isICUVersionAtLeast(ICU_45)) {
-            // See ticket#7008
-            if (*tzid == UnicodeString("Asia/Amman")) {
-                continue;
-            }
-        }
         BasicTimeZone *tz = (BasicTimeZone*)TimeZone::createTimeZone(*tzid);
         VTimeZone *vtz_org = VTimeZone::createVTimeZoneByID(*tzid);
         vtz_org->setTZURL("http://source.icu-project.org/timezone");
@@ -841,8 +841,15 @@ TimeZoneRuleTest::TestVTimeZoneRoundTrip(void) {
                     if (avail) {
                         if (!vtz_new->hasEquivalentTransitions(*tz, trans.getTime(),
                                 endTime, TRUE, status)) {
-                            errln("FAIL: VTimeZone for " + *tzid +
-                                " is not equivalent to its OlsonTimeZone corresponding.");
+                            int32_t maxDelta = 1000;
+                            if (!hasEquivalentTransitions(*vtz_new, *tz, trans.getTime() + maxDelta,
+                                endTime, TRUE, maxDelta, status)) {
+                                errln("FAIL: VTimeZone for " + *tzid +
+                                    " is not equivalent to its OlsonTimeZone corresponding.");
+                            } else {
+                                logln("VTimeZone for " + *tzid +
+                                    "  differs from its OlsonTimeZone corresponding with maximum transition time delta - " + maxDelta);
+                            }
                         }
                         if (U_FAILURE(status)) {
                             errln("FAIL: error status is returned from hasEquivalentTransition");
@@ -885,12 +892,6 @@ TimeZoneRuleTest::TestVTimeZoneRoundTripPartial(void) {
             errln("FAIL: error returned while enumerating timezone IDs.");
             break;
         }
-        if (!isICUVersionAtLeast(ICU_45)) {
-            // See ticket#7008
-            if (*tzid == UnicodeString("Asia/Amman")) {
-                continue;
-            }
-        }
         BasicTimeZone *tz = (BasicTimeZone*)TimeZone::createTimeZone(*tzid);
         VTimeZone *vtz_org = VTimeZone::createVTimeZoneByID(*tzid);
         VTimeZone *vtz_new = NULL;
@@ -930,8 +931,16 @@ TimeZoneRuleTest::TestVTimeZoneRoundTripPartial(void) {
                         if (avail) {
                             if (!vtz_new->hasEquivalentTransitions(*tz, trans.getTime(),
                                     endTime, TRUE, status)) {
-                                errln("FAIL: VTimeZone for " + *tzid +
-                                    " is not equivalent to its OlsonTimeZone corresponding.");
+                                int32_t maxDelta = 1000;
+                                if (!hasEquivalentTransitions(*vtz_new, *tz, trans.getTime() + maxDelta,
+                                    endTime, TRUE, maxDelta, status)) {
+                                    errln("FAIL: VTimeZone for " + *tzid +
+                                        " is not equivalent to its OlsonTimeZone corresponding.");
+                                } else {
+                                    logln("VTimeZone for " + *tzid +
+                                        "  differs from its OlsonTimeZone corresponding with maximum transition time delta - " + maxDelta);
+                                }
+
                             }
                             if (U_FAILURE(status)) {
                                 errln("FAIL: error status is returned from hasEquivalentTransition");
@@ -1130,7 +1139,7 @@ TimeZoneRuleTest::TestGetSimpleRules(void) {
             if (initial == NULL) {
                 errln("FAIL: initial rule must not be NULL");
                 break;
-            } else if (!(std == NULL && dst == NULL || std != NULL && dst != NULL)) {
+            } else if (!((std == NULL && dst == NULL) || (std != NULL && dst != NULL))) {
                 errln("FAIL: invalid std/dst pair.");
                 break;
             }
@@ -1761,6 +1770,52 @@ TimeZoneRuleTest::TestVTimeZoneCoverage(void) {
     if (*vtz1 != *vtz || !(*vtz1 == *vtz)) {
         errln("FAIL: VTimeZone vtz1 is equal to vtz, but got wrong result");
     }
+
+    // Creation from BasicTimeZone
+    //
+    status = U_ZERO_ERROR;
+    VTimeZone *vtzFromBasic = NULL;
+    SimpleTimeZone *simpleTZ = new SimpleTimeZone(28800000, "Asia/Singapore");
+    simpleTZ->setStartYear(1970);
+    simpleTZ->setStartRule(0,  // month
+                          1,  // day of week
+                          0,  // time
+                          status);
+    simpleTZ->setEndRule(1, 1, 0, status);
+    if (U_FAILURE(status)) {
+        errln("File %s, line %d, failed with status = %s", __FILE__, __LINE__, u_errorName(status));
+        goto end_basic_tz_test;
+    }
+    vtzFromBasic = VTimeZone::createVTimeZoneFromBasicTimeZone(*simpleTZ, status);
+    if (U_FAILURE(status) || vtzFromBasic == NULL) {
+        dataerrln("File %s, line %d, failed with status = %s", __FILE__, __LINE__, u_errorName(status));
+        goto end_basic_tz_test;
+    }
+
+    // delete the source time zone, to make sure there are no dependencies on it.
+    delete simpleTZ;
+
+    // Create another simple time zone w the same rules, and check that it is the
+    // same as the test VTimeZone created above.
+    {
+        SimpleTimeZone simpleTZ2(28800000, "Asia/Singapore");
+        simpleTZ2.setStartYear(1970);
+        simpleTZ2.setStartRule(0,  // month
+                              1,  // day of week
+                              0,  // time
+                              status);
+        simpleTZ2.setEndRule(1, 1, 0, status);
+        if (U_FAILURE(status)) {
+            errln("File %s, line %d, failed with status = %s", __FILE__, __LINE__, u_errorName(status));
+            goto end_basic_tz_test;
+        }
+        if (vtzFromBasic->hasSameRules(simpleTZ2) == FALSE) {
+            errln("File %s, line %d, failed hasSameRules() ", __FILE__, __LINE__);
+            goto end_basic_tz_test;
+        }
+    }
+end_basic_tz_test:
+    delete vtzFromBasic;
 
     delete otz;
     delete vtz;
@@ -2462,6 +2517,148 @@ TimeZoneRuleTest::compareTransitionsDescending(BasicTimeZone& z1, BasicTimeZone&
             time -= 1;
         }
     }
+}
+
+// Slightly modified version of BasicTimeZone::hasEquivalentTransitions.
+// This version returns TRUE if transition time delta is within the given
+// delta range.
+static UBool hasEquivalentTransitions(/*const*/ BasicTimeZone& tz1, /*const*/BasicTimeZone& tz2,
+                                        UDate start, UDate end,
+                                        UBool ignoreDstAmount, int32_t maxTransitionTimeDelta,
+                                        UErrorCode& status) {
+    if (U_FAILURE(status)) {
+        return FALSE;
+    }
+    if (tz1.hasSameRules(tz2)) {
+        return TRUE;
+    }
+    // Check the offsets at the start time
+    int32_t raw1, raw2, dst1, dst2;
+    tz1.getOffset(start, FALSE, raw1, dst1, status);
+    if (U_FAILURE(status)) {
+        return FALSE;
+    }
+    tz2.getOffset(start, FALSE, raw2, dst2, status);
+    if (U_FAILURE(status)) {
+        return FALSE;
+    }
+    if (ignoreDstAmount) {
+        if ((raw1 + dst1 != raw2 + dst2)
+            || (dst1 != 0 && dst2 == 0)
+            || (dst1 == 0 && dst2 != 0)) {
+            return FALSE;
+        }
+    } else {
+        if (raw1 != raw2 || dst1 != dst2) {
+            return FALSE;
+        }            
+    }
+    // Check transitions in the range
+    UDate time = start;
+    TimeZoneTransition tr1, tr2;
+    while (TRUE) {
+        UBool avail1 = tz1.getNextTransition(time, FALSE, tr1);
+        UBool avail2 = tz2.getNextTransition(time, FALSE, tr2);
+
+        if (ignoreDstAmount) {
+            // Skip a transition which only differ the amount of DST savings
+            while (TRUE) {
+                if (avail1
+                        && tr1.getTime() <= end
+                        && (tr1.getFrom()->getRawOffset() + tr1.getFrom()->getDSTSavings()
+                                == tr1.getTo()->getRawOffset() + tr1.getTo()->getDSTSavings())
+                        && (tr1.getFrom()->getDSTSavings() != 0 && tr1.getTo()->getDSTSavings() != 0)) {
+                    tz1.getNextTransition(tr1.getTime(), FALSE, tr1);
+                } else {
+                    break;
+                }
+            }
+            while (TRUE) {
+                if (avail2
+                        && tr2.getTime() <= end
+                        && (tr2.getFrom()->getRawOffset() + tr2.getFrom()->getDSTSavings()
+                                == tr2.getTo()->getRawOffset() + tr2.getTo()->getDSTSavings())
+                        && (tr2.getFrom()->getDSTSavings() != 0 && tr2.getTo()->getDSTSavings() != 0)) {
+                    tz2.getNextTransition(tr2.getTime(), FALSE, tr2);
+                } else {
+                    break;
+                }
+            }
+        }
+
+        UBool inRange1 = (avail1 && tr1.getTime() <= end);
+        UBool inRange2 = (avail2 && tr2.getTime() <= end);
+        if (!inRange1 && !inRange2) {
+            // No more transition in the range
+            break;
+        }
+        if (!inRange1 || !inRange2) {
+            return FALSE;
+        }
+        double delta = tr1.getTime() >= tr2.getTime() ? tr1.getTime() - tr2.getTime() : tr2.getTime() - tr1.getTime();
+        if (delta > (double)maxTransitionTimeDelta) {
+            return FALSE;
+        }
+        if (ignoreDstAmount) {
+            if (tr1.getTo()->getRawOffset() + tr1.getTo()->getDSTSavings()
+                        != tr2.getTo()->getRawOffset() + tr2.getTo()->getDSTSavings()
+                    || (tr1.getTo()->getDSTSavings() != 0 &&  tr2.getTo()->getDSTSavings() == 0)
+                    || (tr1.getTo()->getDSTSavings() == 0 &&  tr2.getTo()->getDSTSavings() != 0)) {
+                return FALSE;
+            }
+        } else {
+            if (tr1.getTo()->getRawOffset() != tr2.getTo()->getRawOffset() ||
+                tr1.getTo()->getDSTSavings() != tr2.getTo()->getDSTSavings()) {
+                return FALSE;
+            }
+        }
+        time = tr1.getTime() > tr2.getTime() ? tr1.getTime() : tr2.getTime();
+    }
+    return TRUE;
+}
+
+// Test case for ticket#8943
+// RuleBasedTimeZone#getOffsets throws NPE
+void
+TimeZoneRuleTest::TestT8943(void) {
+    UErrorCode status = U_ZERO_ERROR;
+    UnicodeString id("Ekaterinburg Time");
+    UnicodeString stdName("Ekaterinburg Standard Time");
+    UnicodeString dstName("Ekaterinburg Daylight Time");
+
+    InitialTimeZoneRule *initialRule = new InitialTimeZoneRule(stdName, 18000000, 0);
+    RuleBasedTimeZone *rbtz = new RuleBasedTimeZone(id, initialRule);
+
+    DateTimeRule *dtRule = new DateTimeRule(UCAL_OCTOBER, -1, UCAL_SUNDAY, 10800000, DateTimeRule::WALL_TIME);
+    AnnualTimeZoneRule *atzRule = new AnnualTimeZoneRule(stdName, 18000000, 0, dtRule, 2000, 2010);
+    rbtz->addTransitionRule(atzRule, status);
+
+    dtRule = new DateTimeRule(UCAL_MARCH, -1, UCAL_SUNDAY, 7200000, DateTimeRule::WALL_TIME);
+    atzRule = new AnnualTimeZoneRule(dstName, 18000000, 3600000, dtRule, 2000, 2010);
+    rbtz->addTransitionRule(atzRule, status);
+
+    dtRule = new DateTimeRule(UCAL_JANUARY, 1, 0, DateTimeRule::WALL_TIME);
+    atzRule = new AnnualTimeZoneRule(stdName, 21600000, 0, dtRule, 2011, AnnualTimeZoneRule::MAX_YEAR);
+    rbtz->addTransitionRule(atzRule, status);
+
+    dtRule = new DateTimeRule(UCAL_JANUARY, 1, 1, DateTimeRule::WALL_TIME);
+    atzRule = new AnnualTimeZoneRule(dstName, 21600000, 0, dtRule, 2011, AnnualTimeZoneRule::MAX_YEAR);
+    rbtz->addTransitionRule(atzRule, status);
+    rbtz->complete(status);
+
+    if (U_FAILURE(status)) {
+        errln("Failed to construct a RuleBasedTimeZone");
+    } else {
+        int32_t raw, dst;
+        rbtz->getOffset(1293822000000.0 /* 2010-12-31 19:00:00 UTC */, FALSE, raw, dst, status);
+        if (U_FAILURE(status)) {
+            errln("Error invoking getOffset");
+        } else if (raw != 21600000 || dst != 0) {
+            errln(UnicodeString("Fail: Wrong offsets: ") + raw + "/" + dst + " Expected: 21600000/0");
+        }
+    }
+
+    delete rbtz;
 }
 
 #endif /* #if !UCONFIG_NO_FORMATTING */

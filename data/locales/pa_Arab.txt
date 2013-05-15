@@ -1,16 +1,16 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/pa_Arab.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/pa_Arab.xml
 // *
 // ***************************************************************************
 /**
  *  ICU <specials> source: <path>/xml/main/pa_Arab.xml
  */
 pa_Arab{
-    %%ParentIsRoot:int{1}
+    %%Parent{"root"}
     AuxExemplarCharacters{"[أ ٻ ة ٺ ټ ٽ]"}
     ExemplarCharacters{
         "[\u064F ء آ ؤ ئ ا ب پ ت ث ٹ ج چ ح خ د ذ ڈ ر ز ڑ ژ س ش ص ض ط ظ ع غ ف ق ک گ ل "
@@ -20,20 +20,10 @@ pa_Arab{
         "Arab",
     }
     NumberElements{
-        ".",
-        ",",
-        ";",
-        "%",
-        "٠",
-        "#",
-        "-",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
+        default{"arabext"}
+        native{"arabext"}
     }
-    Version{"2.0.47.30"}
+    Version{"2.0.77.46"}
     calendar{
         gregorian{
             DateTimePatterns{
@@ -56,7 +46,7 @@ pa_Arab{
                 Md{"d/M"}
                 mmss{"mm:ss"}
                 yyMMM{"MMM yy"}
-                yyQ{"Q yy"}
+                yyQQQ{"QQQ yy"}
             }
             dayNames{
                 format{
@@ -133,7 +123,6 @@ pa_Arab{
             }
         }
     }
-    defaultNumberingSystem{"arab"}
     layout{
         characters{"right-to-left"}
         lines{"top-to-bottom"}

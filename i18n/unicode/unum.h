@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2010, International Business Machines Corporation and others.
+* Copyright (C) 1997-2012, International Business Machines Corporation and others.
 * All Rights Reserved.
 * Modification History:
 *
@@ -107,7 +107,7 @@
  * formatters.
  * <P>
  * You can also control the display of numbers with such function as
- * unum_getAttribues() and unum_setAtributes(), which let you set the
+ * unum_getAttributes() and unum_setAttributes(), which let you set the
  * miminum fraction digits, grouping, etc.
  * @see UNumberFormatAttributes for more details
  * <P>
@@ -134,19 +134,34 @@ typedef void* UNumberFormat;
  */
 typedef enum UNumberFormatStyle {
     /**
-     * Decimal format defined by pattern 
+     * Decimal format defined by a pattern string.
      * @stable ICU 3.0
      */
     UNUM_PATTERN_DECIMAL=0,
-    /** Decimal format */
+    /**
+     * Decimal format ("normal" style).
+     * @stable ICU 2.0
+     */
     UNUM_DECIMAL=1,
-    /** Currency format */
+    /**
+     * Currency format with a currency symbol, e.g., "$1.00".
+     * @stable ICU 2.0
+     */
     UNUM_CURRENCY,
-    /** Percent format */
+    /**
+     * Percent format
+     * @stable ICU 2.0
+     */
     UNUM_PERCENT,
-    /** Scientific format */
+    /**
+     * Scientific format
+     * @stable ICU 2.1
+     */
     UNUM_SCIENTIFIC,
-    /** Spellout rule-based format */
+    /**
+     * Spellout rule-based format
+     * @stable ICU 2.0
+     */
     UNUM_SPELLOUT,
     /** 
      * Ordinal rule-based format 
@@ -159,18 +174,40 @@ typedef enum UNumberFormatStyle {
      */
     UNUM_DURATION,
     /** 
-     * Numbering system rule-based format 
-     * @draft ICU 4.2
+     * Numbering system rule-based format
+     * @stable ICU 4.2
      */
     UNUM_NUMBERING_SYSTEM,
     /** 
-     * Rule-based format defined by pattern 
+     * Rule-based format defined by a pattern string.
      * @stable ICU 3.0
      */
     UNUM_PATTERN_RULEBASED,
-    /** Default format */
+    /**
+     * Currency format with an ISO currency code, e.g., "USD1.00".
+     * @stable ICU 4.8
+     */
+    UNUM_CURRENCY_ISO,
+    /**
+     * Currency format with a pluralized currency name,
+     * e.g., "1.00 US dollar" and "3.00 US dollars".
+     * @stable ICU 4.8
+     */
+    UNUM_CURRENCY_PLURAL,
+    /**
+     * One more than the highest number format style constant.
+     * @stable ICU 4.8
+     */
+    UNUM_FORMAT_STYLE_COUNT,
+    /**
+     * Default format
+     * @stable ICU 2.0
+     */
     UNUM_DEFAULT = UNUM_DECIMAL,
-    /** (Alias for UNUM_PATTERN_DECIMAL) */
+    /**
+     * Alias for UNUM_PATTERN_DECIMAL
+     * @stable ICU 3.0
+     */
     UNUM_IGNORE = UNUM_PATTERN_DECIMAL
 } UNumberFormatStyle;
 
@@ -183,17 +220,24 @@ typedef enum UNumberFormatRoundingMode {
     UNUM_ROUND_DOWN,
     UNUM_ROUND_UP,
     /**
-     * Half-even rounding, misspelled name
-     * @deprecated, ICU 3.8
-     */
-    UNUM_FOUND_HALFEVEN,
-    UNUM_ROUND_HALFDOWN,
-    UNUM_ROUND_HALFUP,
-    /**
      * Half-even rounding
      * @stable, ICU 3.8
      */
-    UNUM_ROUND_HALFEVEN = UNUM_FOUND_HALFEVEN
+    UNUM_ROUND_HALFEVEN,
+#ifndef U_HIDE_DEPRECATED_API
+    /**
+     * Half-even rounding, misspelled name
+     * @deprecated, ICU 3.8
+     */
+    UNUM_FOUND_HALFEVEN = UNUM_ROUND_HALFEVEN,
+#endif  /* U_HIDE_DEPRECATED_API */
+    UNUM_ROUND_HALFDOWN,
+    UNUM_ROUND_HALFUP,
+    /** 
+      * ROUND_UNNECESSARY reports an error if formatted result is not exact.
+      * @stable ICU 4.8
+      */
+    UNUM_ROUND_UNNECESSARY
 } UNumberFormatRoundingMode;
 
 /** The possible number format pad positions. 
@@ -205,6 +249,56 @@ typedef enum UNumberFormatPadPosition {
     UNUM_PAD_BEFORE_SUFFIX,
     UNUM_PAD_AFTER_SUFFIX
 } UNumberFormatPadPosition;
+
+/**
+ * Constants for specifying currency spacing
+ * @stable ICU 4.8
+ */
+enum UCurrencySpacing {
+    /** @stable ICU 4.8 */
+    UNUM_CURRENCY_MATCH,
+    /** @stable ICU 4.8 */
+    UNUM_CURRENCY_SURROUNDING_MATCH,
+    /** @stable ICU 4.8 */
+    UNUM_CURRENCY_INSERT,
+    /** @stable ICU 4.8 */
+    UNUM_CURRENCY_SPACING_COUNT
+};
+typedef enum UCurrencySpacing UCurrencySpacing; /**< @stable ICU 4.8 */
+
+
+/**
+ * FieldPosition and UFieldPosition selectors for format fields
+ * defined by NumberFormat and UNumberFormat.
+ * @stable ICU 49
+ */
+typedef enum UNumberFormatFields {
+    /** @stable ICU 49 */
+    UNUM_INTEGER_FIELD,
+    /** @stable ICU 49 */
+    UNUM_FRACTION_FIELD,
+    /** @stable ICU 49 */
+    UNUM_DECIMAL_SEPARATOR_FIELD,
+    /** @stable ICU 49 */
+    UNUM_EXPONENT_SYMBOL_FIELD,
+    /** @stable ICU 49 */
+    UNUM_EXPONENT_SIGN_FIELD,
+    /** @stable ICU 49 */
+    UNUM_EXPONENT_FIELD,
+    /** @stable ICU 49 */
+    UNUM_GROUPING_SEPARATOR_FIELD,
+    /** @stable ICU 49 */
+    UNUM_CURRENCY_FIELD,
+    /** @stable ICU 49 */
+    UNUM_PERCENT_FIELD,
+    /** @stable ICU 49 */
+    UNUM_PERMILL_FIELD,
+    /** @stable ICU 49 */
+    UNUM_SIGN_FIELD,
+    /** @stable ICU 49 */
+    UNUM_FIELD_COUNT
+} UNumberFormatFields;
+
 
 /**
  * Create and return a new UNumberFormat for formatting and parsing
@@ -266,7 +360,7 @@ U_NAMESPACE_BEGIN
  *
  * @see LocalPointerBase
  * @see LocalPointer
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
 U_DEFINE_LOCAL_OPEN_POINTER(LocalUNumberFormatPointer, UNumberFormat, unum_close);
 
@@ -396,9 +490,9 @@ unum_formatDouble(    const    UNumberFormat*  fmt,
 * @see unum_parseInt64
 * @see unum_parseDouble
 * @see UFieldPosition
-* @draft ICU 4.4 
+* @stable ICU 4.4 
 */
-U_DRAFT int32_t U_EXPORT2 
+U_STABLE int32_t U_EXPORT2 
 unum_formatDecimal(    const    UNumberFormat*  fmt,
             const char *    number,
             int32_t         length,
@@ -533,9 +627,9 @@ unum_parseDouble(    const   UNumberFormat*  fmt,
 * @see unum_format
 * @see unum_formatInt64
 * @see unum_formatDouble
-* @draft ICU 4.4
+* @stable ICU 4.4
 */
-U_DRAFT int32_t U_EXPORT2 
+U_STABLE int32_t U_EXPORT2 
 unum_parseDecimal(const   UNumberFormat*  fmt,
                  const   UChar*          text,
                          int32_t         textLength,
@@ -573,7 +667,7 @@ unum_parseDoubleCurrency(const UNumberFormat* fmt,
 
 /**
  * Set the pattern used by a UNumberFormat.  This can only be used
- * on a DecimalFormat, other formats return U_ILLEGAL_ARGUMENT_ERROR
+ * on a DecimalFormat, other formats return U_UNSUPPORTED_ERROR
  * in the status.
  * @param format The formatter to set.
  * @param localized TRUE if the pattern is localized, FALSE otherwise.
@@ -621,6 +715,20 @@ unum_getAvailable(int32_t localeIndex);
 U_STABLE int32_t U_EXPORT2 
 unum_countAvailable(void);
 
+#if UCONFIG_HAVE_PARSEALLINPUT
+/**
+ * @internal
+ */
+typedef enum UNumberFormatAttributeValue {
+  /** @internal */
+  UNUM_NO = 0,
+  /** @internal */
+  UNUM_YES = 1,
+  /** @internal */
+  UNUM_MAYBE = 2
+} UNumberFormatAttributeValue;
+#endif
+
 /** The possible UNumberFormat numeric attributes @stable ICU 2.0 */
 typedef enum UNumberFormatAttribute {
   /** Parse integers only */
@@ -667,7 +775,41 @@ typedef enum UNumberFormatAttribute {
   /** Lenient parse mode used by rule-based formats.
    * @stable ICU 3.0
    */
-  UNUM_LENIENT_PARSE
+  UNUM_LENIENT_PARSE,
+#if UCONFIG_HAVE_PARSEALLINPUT
+  /** Consume all input. (may use fastpath). Set to UNUM_YES (require fastpath), UNUM_NO (skip fastpath), or UNUM_MAYBE (heuristic).
+   * This is an internal ICU API. Do not use.
+   * @internal
+   */
+  UNUM_PARSE_ALL_INPUT,
+#endif
+
+  /** Count of "regular" numeric attributes.
+   * @internal */
+  UNUM_NUMERIC_ATTRIBUTE_COUNT,
+
+  /** One below the first bitfield-boolean item.
+   * All items after this one are stored in boolean form.
+   * @internal */
+  UNUM_MAX_NONBOOLEAN_ATTRIBUTE = 0x0FFF,
+
+  /** If 1, specifies that if setting the "max integer digits" attribute would truncate a value, set an error status rather than silently truncating.
+   * For example,  formatting the value 1234 with 4 max int digits would succeed, but formatting 12345 would fail. There is no effect on parsing.
+   * Default: 0 (not set)
+   * @draft ICU 50
+   */
+  UNUM_FORMAT_FAIL_IF_MORE_THAN_MAX_DIGITS,
+  /** 
+   * if this attribute is set to 1, specifies that, if the pattern doesn't contain an exponent, the exponent will not be parsed. If the pattern does contain an exponent, this attribute has no effect.
+   * Has no effect on formatting.
+   * Default: 0 (unset)
+   * @draft ICU 50
+   */
+  UNUM_PARSE_NO_EXPONENT,
+
+  /** Limit of boolean attributes.
+   * @internal */
+  UNUM_LIMIT_BOOLEAN_ATTRIBUTE
 } UNumberFormatAttribute;
 
 /**
@@ -783,7 +925,7 @@ typedef enum UNumberFormatTextAttribute {
 /**
 * Get a text attribute associated with a UNumberFormat.
 * An example of a text attribute is the suffix for positive numbers.  If the formatter
-* does not understand the attributre, U_UNSUPPORTED_ERROR is returned as the status.
+* does not understand the attribute, U_UNSUPPORTED_ERROR is returned as the status.
 * Rule-based formatters only understand UNUM_DEFAULT_RULESET and UNUM_PUBLIC_RULESETS.
 * @param fmt The formatter to query.
 * @param tag The attribute to query; one of UNUM_POSITIVE_PREFIX, UNUM_POSITIVE_SUFFIX,
@@ -895,9 +1037,45 @@ typedef enum UNumberFormatSymbol {
   /** The monetary grouping separator 
    * @stable ICU 3.6
    */
-  UNUM_MONETARY_GROUPING_SEPARATOR_SYMBOL = 17,  
+  UNUM_MONETARY_GROUPING_SEPARATOR_SYMBOL = 17,
+  /** One
+   * @stable ICU 4.6
+   */
+  UNUM_ONE_DIGIT_SYMBOL = 18,
+  /** Two
+   * @stable ICU 4.6
+   */
+  UNUM_TWO_DIGIT_SYMBOL = 19,
+  /** Three
+   * @stable ICU 4.6
+   */
+  UNUM_THREE_DIGIT_SYMBOL = 20,
+  /** Four
+   * @stable ICU 4.6
+   */
+  UNUM_FOUR_DIGIT_SYMBOL = 21,
+  /** Five
+   * @stable ICU 4.6
+   */
+  UNUM_FIVE_DIGIT_SYMBOL = 22,
+  /** Six
+   * @stable ICU 4.6
+   */
+  UNUM_SIX_DIGIT_SYMBOL = 23,
+  /** Seven
+    * @stable ICU 4.6
+   */
+  UNUM_SEVEN_DIGIT_SYMBOL = 24,
+  /** Eight
+   * @stable ICU 4.6
+   */
+  UNUM_EIGHT_DIGIT_SYMBOL = 25,
+  /** Nine
+   * @stable ICU 4.6
+   */
+  UNUM_NINE_DIGIT_SYMBOL = 26,
   /** count symbol constants */
-  UNUM_FORMAT_SYMBOL_COUNT = 18
+  UNUM_FORMAT_SYMBOL_COUNT = 27
 } UNumberFormatSymbol;
 
 /**

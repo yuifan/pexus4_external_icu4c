@@ -1,34 +1,24 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/ur_IN.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/ur_IN.xml
 // *
 // ***************************************************************************
 /**
  *  ICU <specials> source: <path>/xml/main/ur_IN.xml
  */
 ur_IN{
-    NumberPatterns{
-        "#,##,##0.###",
-        "¤ #,##,##0.00",
-        "#,##,##0%",
-        "#E0",
-    }
-    Version{"2.0.41.23"}
-    calendar{
-        gregorian{
-            DateTimeElements:intvector{
-                1,
-                4,
-            }
-            weekend:intvector{
-                1,
-                0,
-                1,
-                86400000,
+    NumberElements{
+        default{"arabext"}
+        latn{
+            patterns{
+                currencyFormat{"¤ #,##,##0.00"}
+                decimalFormat{"#,##,##0.###"}
+                percentFormat{"#,##,##0%"}
             }
         }
     }
+    Version{"2.0.75.99"}
 }

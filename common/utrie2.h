@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2001-2010, International Business Machines
+*   Copyright (C) 2001-2011, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -18,6 +18,7 @@
 #define __UTRIE2_H__
 
 #include "unicode/utypes.h"
+#include "putilimp.h"
 #include "udataswp.h"
 
 U_CDECL_BEGIN
@@ -350,6 +351,15 @@ utrie2_swap(const UDataSwapper *ds,
             UErrorCode *pErrorCode);
 
 /**
+ * Swap a serialized UTrie or UTrie2.
+ * @internal
+ */
+U_CAPI int32_t U_EXPORT2
+utrie2_swapAnyVersion(const UDataSwapper *ds,
+                      const void *inData, int32_t length, void *outData,
+                      UErrorCode *pErrorCode);
+
+/**
  * Build a UTrie2 (version 2) from a UTrie (version 1).
  * Enumerates all values in the UTrie and builds a UTrie2 with the same values.
  * The resulting UTrie2 will be frozen.
@@ -609,8 +619,9 @@ U_CDECL_END
 
 /* C++ convenience wrappers ------------------------------------------------- */
 
-#ifdef XP_CPLUSPLUS
+#ifdef __cplusplus
 
+#include "unicode/utf.h"
 #include "mutex.h"
 
 U_NAMESPACE_BEGIN

@@ -1,28 +1,31 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/ar_TN.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/ar_TN.xml
 // *
 // ***************************************************************************
 ar_TN{
-    NumberPatterns{
-        "#0.###;#0.###-",
-        "¤#0.00",
-        "#,##0%",
-        "#E0",
+    NumberElements{
+        default{"latn"}
+        latn{
+            patterns{
+                currencyFormat{"¤#0.00"}
+                decimalFormat{"#0.###;#0.###-"}
+            }
+            symbols{
+                decimal{","}
+                group{"."}
+            }
+        }
     }
-    Version{"2.0.48.49"}
+    Version{"2.0.77.46"}
     calendar{
         gregorian{
-            DateTimeElements:intvector{
-                7,
-                4,
-            }
             DateTimePatterns{
-                "zzzz h:mm:ss a",
-                "z h:mm:ss a",
+                "h:mm:ss a zzzz",
+                "h:mm:ss a z",
                 "h:mm:ss a",
                 "h:mm a",
                 "EEEE، d MMMM، y",
@@ -41,19 +44,6 @@ ar_TN{
                 yM{"yyyy/M"}
                 yyyyMM{"yyyy/MM"}
             }
-            dayNames{
-                format{
-                    abbreviated{
-                        "الأحد",
-                        "الاثنين",
-                        "الثلاثاء",
-                        "الأربعاء",
-                        "الخميس",
-                        "الجمعة",
-                        "السبت",
-                    }
-                }
-            }
             intervalFormats{
                 M{
                     M{"M‏-M"}
@@ -71,13 +61,96 @@ ar_TN{
                     d{"d‏-d MMM، y"}
                 }
             }
-            weekend:intvector{
-                6,
-                0,
-                7,
-                86400000,
+            monthNames{
+                format{
+                    abbreviated{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                    narrow{
+                        "ج",
+                        "ف",
+                        "م",
+                        "أ",
+                        "م",
+                        "ج",
+                        "ج",
+                        "أ",
+                        "س",
+                        "أ",
+                        "ن",
+                        "د",
+                    }
+                    wide{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                }
+                stand-alone{
+                    abbreviated{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                    narrow{
+                        "ج",
+                        "ف",
+                        "م",
+                        "أ",
+                        "م",
+                        "ج",
+                        "ج",
+                        "أ",
+                        "س",
+                        "أ",
+                        "ن",
+                        "د",
+                    }
+                    wide{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                }
             }
         }
     }
-    defaultNumberingSystem{"latn"}
 }

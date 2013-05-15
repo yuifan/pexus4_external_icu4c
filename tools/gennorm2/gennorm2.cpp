@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2009-2010, International Business Machines
+*   Copyright (C) 2009-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -18,8 +18,7 @@
 */
 
 #include "unicode/utypes.h"
-#include "unicode/std_string.h"  // U_HAVE_STD_STRING, #include <string>
-#include "n2builder.h"  // UCONFIG_NO_NORMALIZATION=1 if !U_HAVE_STD_STRING
+#include "n2builder.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +28,7 @@
 #include "unicode/putil.h"
 #include "unicode/uchar.h"
 #include "unicode/unistr.h"
+#include "charstr.h"
 #include "normalizer2impl.h"
 #include "toolutil.h"
 #include "uoptions.h"
@@ -80,7 +80,6 @@ main(int argc, char* argv[]) {
 
     /* preset then read command line options */
     options[SOURCEDIR].value="";
-    options[UNICODE_VERSION].value=U_UNICODE_VERSION;
     argc=u_parseArgs(argc, argv, sizeof(options)/sizeof(options[HELP_H]), options);
 
     /* error handling, printing usage message */
@@ -136,41 +135,45 @@ main(int argc, char* argv[]) {
         "because UCONFIG_NO_NORMALIZATION is set, \n"
         "see icu/source/common/unicode/uconfig.h\n");
     udata_createDummy(NULL, NULL, options[OUTPUT_FILENAME].value, errorCode);
-    return U_UNSUPPORTED_ERROR;
+    // Should not return an error since this is the expected behaviour if UCONFIG_NO_NORMALIZATION is on.
+    // return U_UNSUPPORTED_ERROR;
+    return 0;
 
 #else
 
     LocalPointer<Normalizer2DataBuilder> builder(new Normalizer2DataBuilder(errorCode));
     errorCode.assertSuccess();
 
-    builder->setUnicodeVersion(options[UNICODE_VERSION].value);
+    if(options[UNICODE_VERSION].doesOccur) {
+        builder->setUnicodeVersion(options[UNICODE_VERSION].value);
+    }
 
     if(options[OPT_FAST].doesOccur) {
         builder->setOptimization(Normalizer2DataBuilder::OPTIMIZE_FAST);
     }
 
     // prepare the filename beginning with the source dir
-    U_STD_NSQ string filename(options[SOURCEDIR].value);
+    CharString filename(options[SOURCEDIR].value, errorCode);
     int32_t pathLength=filename.length();
     if( pathLength>0 &&
         filename[pathLength-1]!=U_FILE_SEP_CHAR &&
         filename[pathLength-1]!=U_FILE_ALT_SEP_CHAR
     ) {
-        filename.push_back(U_FILE_SEP_CHAR);
+        filename.append(U_FILE_SEP_CHAR, errorCode);
         pathLength=filename.length();
     }
 
     for(int i=1; i<argc; ++i) {
         printf("gennorm2: processing %s\n", argv[i]);
-        filename.append(argv[i]);
-        LocalStdioFilePointer f(fopen(filename.c_str(), "r"));
+        filename.append(argv[i], errorCode);
+        LocalStdioFilePointer f(fopen(filename.data(), "r"));
         if(f==NULL) {
-            fprintf(stderr, "gennorm2 error: unable to open %s\n", filename.c_str());
+            fprintf(stderr, "gennorm2 error: unable to open %s\n", filename.data());
             exit(U_FILE_ACCESS_ERROR);
         }
         builder->setOverrideHandling(Normalizer2DataBuilder::OVERRIDE_PREVIOUS);
         parseFile(f.getAlias(), *builder);
-        filename.erase(pathLength);
+        filename.truncate(pathLength);
     }
 
     builder->writeBinaryFile(options[OUTPUT_FILENAME].value);
@@ -196,6 +199,11 @@ void parseFile(FILE *f, Normalizer2DataBuilder &builder) {
             continue;  // skip empty and comment-only lines
         }
         if(line[0]=='*') {
+            const char *s=u_skipWhitespace(line+1);
+            if(0==strncmp(s, "Unicode", 7)) {
+                s=u_skipWhitespace(s+7);
+                builder.setUnicodeVersion(s);
+            }
             continue;  // reserved syntax
         }
         const char *delimiter;

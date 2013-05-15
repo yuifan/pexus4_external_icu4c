@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/rm.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/rm.xml
 // *
 // ***************************************************************************
 /**
@@ -12,32 +12,33 @@
 rm{
     AuxExemplarCharacters{"[á à ă â å ä ā æ ç é è ĕ ê ë ē í ì ĭ î ï ī ñ ó ò ŏ ô ö ø ō œ ú ù ŭ û ü ū ÿ]"}
     ExemplarCharacters{"[a à b c d e é è f g h i ì j k l m n o ò p q r s t u ù v w x y z]"}
-    ExemplarCharactersCurrency{"[a b c d e f g h i j k l m n o p q r s t u v w x y z]"}
     ExemplarCharactersIndex{"[A À B C D E É È F G H I Ì J K L M N O Ò P Q R S T U Ù V W X Y Z]"}
     LocaleScript{
         "Latn",
     }
     NumberElements{
-        ".",
-        "’",
-        ";",
-        "%",
-        "0",
-        "#",
-        "−",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
+        latn{
+            patterns{
+                currencyFormat{"#,##0.00 ¤"}
+                decimalFormat{"#,##0.###"}
+                percentFormat{"#,##0 %"}
+                scientificFormat{"#E0"}
+            }
+            symbols{
+                decimal{"."}
+                exponential{"E"}
+                group{"’"}
+                infinity{"∞"}
+                list{";"}
+                minusSign{"−"}
+                nan{"NaN"}
+                perMille{"‰"}
+                percentSign{"%"}
+                plusSign{"+"}
+            }
+        }
     }
-    NumberPatterns{
-        "#,##0.###",
-        "#,##0.00 ¤",
-        "#,##0 %",
-        "#E0",
-    }
-    Version{"2.0.47.63"}
+    Version{"2.0.78.47"}
     calendar{
         gregorian{
             AmPmMarkers{
@@ -49,10 +50,10 @@ rm{
                 "HH:mm:ss z",
                 "HH:mm:ss",
                 "HH:mm",
-                "EEEE, d. MMMM y",
-                "d. MMMM y",
-                "dd.MM.yyyy",
-                "dd.MM.yy",
+                "EEEE, 'ils' d 'da' MMMM y",
+                "d 'da' MMMM y",
+                "dd-MM-yyyy",
+                "dd-MM-yy",
                 "{1} {0}",
                 "{1} {0}",
                 "{1} {0}",
@@ -60,7 +61,6 @@ rm{
                 "{1} {0}",
             }
             availableFormats{
-                EEEd{"d. EEE"}
                 Ed{"E d."}
                 H{"H"}
                 HHmm{"HH:mm"}
@@ -82,17 +82,15 @@ rm{
                 ms{"mm:ss"}
                 y{"y"}
                 yM{"yyyy-M"}
-                yMEd{"EEE, yyyy-M-d"}
+                yMEd{"E, yyyy-M-d"}
                 yMMM{"MMM y"}
-                yMMMEd{"EEE, d. MMM y"}
+                yMMMEd{"E, d. MMM y"}
                 yMMMM{"MMMM y"}
-                yQ{"Q yyyy"}
                 yQQQ{"QQQ y"}
+                yQQQQ{"QQQQ y"}
                 yyMM{"MM.yy"}
                 yyMMM{"MMM yy"}
                 yyMMdd{"dd.MM.yy"}
-                yyQ{"Q yy"}
-                yyQQQQ{"QQQQ yy"}
                 yyyy{"y"}
                 yyyyMMMM{"MMMM y"}
             }
@@ -145,11 +143,9 @@ rm{
                     relative{
                         "-1"{"ier"}
                         "-2"{"stersas"}
-                        "-3"{"squarsas"}
                         "0"{"oz"}
                         "1"{"damaun"}
                         "2"{"puschmaun"}
-                        "3"{"squartmaun"}
                     }
                 }
                 dayperiod{
@@ -198,9 +194,6 @@ rm{
                     M{"E, d. MMM - E, d. MMM"}
                     d{"E, d. - E, d. MMM"}
                 }
-                MMMM{
-                    M{"LLLL-LLLL"}
-                }
                 MMMd{
                     M{"d. MMM - d. MMM"}
                     d{"d.-d. MMM"}
@@ -239,12 +232,9 @@ rm{
                     y{"MM.yy - MM.yy"}
                 }
                 yMEd{
-                    M{"E, dd.MM.yy - E,
-dd.MM.yy"}
-                    d{"E, dd.MM.yy - E,
-dd.MM.yy"}
-                    y{"E, dd.MM.yy - E,
-dd.MM.yy"}
+                    M{"E, dd.MM.yy - E, dd.MM.yy"}
+                    d{"E, dd.MM.yy - E, dd.MM.yy"}
+                    y{"E, dd.MM.yy - E, dd.MM.yy"}
                 }
                 yMMM{
                     M{"MMM-MMM y"}
@@ -253,8 +243,7 @@ dd.MM.yy"}
                 yMMMEd{
                     M{"E, d. MMM - E, d. MMM y"}
                     d{"E, d. - E, d. MMM y"}
-                    y{"E, d. MMM y - E, d. MMM
-y"}
+                    y{"E, d. MMM y - E, d. MMM y"}
                 }
                 yMMMM{
                     M{"MM – MM.yyyy"}

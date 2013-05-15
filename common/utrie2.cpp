@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2001-2010, International Business Machines
+*   Copyright (C) 2001-2011, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -27,9 +27,13 @@
 #endif
 
 #include "unicode/utypes.h"
+#include "unicode/utf.h"
+#include "unicode/utf8.h"
+#include "unicode/utf16.h"
 #include "cmemory.h"
 #include "utrie2.h"
 #include "utrie2_impl.h"
+#include "uassert.h"
 
 /* Public UTrie2 API implementation ----------------------------------------- */
 
@@ -79,7 +83,7 @@ utrie2_get32FromLeadSurrogateCodeUnit(const UTrie2 *trie, UChar32 c) {
     }
 }
 
-static U_INLINE int32_t
+static inline int32_t
 u8Index(const UTrie2 *trie, UChar32 c, int32_t i) {
     int32_t idx=
         _UTRIE2_INDEX_FROM_CP(
@@ -128,7 +132,7 @@ utrie2_openFromSerialized(UTrie2ValueBits valueBits,
     const uint16_t *p16;
     int32_t actualLength;
 
-    UTrie2 tempTrie={ NULL };
+    UTrie2 tempTrie;
     UTrie2 *trie;
 
     if(U_FAILURE(*pErrorCode)) {
@@ -143,7 +147,7 @@ utrie2_openFromSerialized(UTrie2ValueBits valueBits,
     }
 
     /* enough data for a trie header? */
-    if(length<sizeof(UTrie2Header)) {
+    if(length<(int32_t)sizeof(UTrie2Header)) {
         *pErrorCode=U_INVALID_FORMAT_ERROR;
         return 0;
     }
@@ -162,6 +166,7 @@ utrie2_openFromSerialized(UTrie2ValueBits valueBits,
     }
 
     /* get the length values and offsets */
+    uprv_memset(&tempTrie, 0, sizeof(tempTrie));
     tempTrie.indexLength=header->indexLength;
     tempTrie.dataLength=header->shiftedDataLength<<UTRIE2_INDEX_SHIFT;
     tempTrie.index2NullOffset=header->index2NullOffset;
@@ -412,7 +417,7 @@ utrie2_swap(const UDataSwapper *ds,
     }
 
     /* setup and swapping */
-    if(length>=0 && length<sizeof(UTrie2Header)) {
+    if(length>=0 && length<(int32_t)sizeof(UTrie2Header)) {
         *pErrorCode=U_INDEX_OUTOFBOUNDS_ERROR;
         return 0;
     }
@@ -481,13 +486,16 @@ utrie2_swap(const UDataSwapper *ds,
     return size;
 }
 
+// utrie2_swapAnyVersion() should be defined here but lives in utrie2_builder.c
+// to avoid a dependency from utrie2.cpp on utrie.c.
+
 /* enumeration -------------------------------------------------------------- */
 
-#define MIN(a, b) ((a)<(b) ? (a) : (b))
+#define MIN_VALUE(a, b) ((a)<(b) ? (a) : (b))
 
 /* default UTrie2EnumValue() returns the input value itself */
 static uint32_t U_CALLCONV
-enumSameValue(const void *context, uint32_t value) {
+enumSameValue(const void * /*context*/, uint32_t value) {
     return value;
 }
 
@@ -525,6 +533,7 @@ enumEitherTrie(const UTrie2 *trie,
     if(trie->newTrie==NULL) {
         /* frozen trie */
         idx=trie->index;
+        U_ASSERT(idx!=NULL); /* the following code assumes trie->newTrie is not NULL when idx is NULL */
         data32=trie->data32;
 
         index2NullOffset=trie->index2NullOffset;
@@ -533,6 +542,7 @@ enumEitherTrie(const UTrie2 *trie,
         /* unfrozen, mutable trie */
         idx=NULL;
         data32=trie->newTrie->data;
+        U_ASSERT(data32!=NULL); /* the following code assumes idx is not NULL when data32 is NULL */
 
         index2NullOffset=trie->newTrie->index2NullOffset;
         nullBlock=trie->newTrie->dataNullOffset;
@@ -565,14 +575,14 @@ enumEitherTrie(const UTrie2 *trie,
                  * This special block has half the normal length.
                  */
                 i2Block=UTRIE2_LSCP_INDEX_2_OFFSET;
-                tempLimit=MIN(0xdc00, limit);
+                tempLimit=MIN_VALUE(0xdc00, limit);
             } else {
                 /*
                  * Switch back to the normal part of the index-2 table.
                  * Enumerate the second half of the surrogates block.
                  */
                 i2Block=0xd800>>UTRIE2_SHIFT_2;
-                tempLimit=MIN(0xe000, limit);
+                tempLimit=MIN_VALUE(0xe000, limit);
             }
         } else {
             /* supplementary code points */

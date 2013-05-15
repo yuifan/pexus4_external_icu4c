@@ -1,11 +1,11 @@
 /**
  *******************************************************************************
- * Copyright (C) 2001-2009, International Business Machines Corporation and    *
- * others. All Rights Reserved.                                                *
- *******************************************************************************
- *
+ * Copyright (C) 2001-2012, International Business Machines Corporation and
+ * others. All Rights Reserved.
  *******************************************************************************
  */
+
+#include "utypeinfo.h"  // for 'typeid' to work
 
 #include "unicode/utypes.h"
 
@@ -85,7 +85,7 @@ class Integer : public UObject {
 
     virtual UBool operator==(const UObject& other) const 
     {
-        return other.getDynamicClassID() == getStaticClassID() &&
+        return typeid(*this) == typeid(other) &&
             _val == ((Integer&)other)._val;
     }
 
@@ -116,8 +116,9 @@ class TestIntegerService : public ICUService {
 
     virtual ICUServiceFactory* createSimpleFactory(UObject* obj, const UnicodeString& id, UBool visible, UErrorCode& status) 
     {
-        if (U_SUCCESS(status) && obj && obj->getDynamicClassID() == Integer::getStaticClassID()) {
-            return new SimpleFactory((Integer*)obj, id, visible);
+        Integer* i;
+        if (U_SUCCESS(status) && obj && (i = dynamic_cast<Integer*>(obj)) != NULL) {
+            return new SimpleFactory(i, id, visible);
         }
         return NULL;
     }
@@ -156,13 +157,15 @@ UnicodeString append(UnicodeString& result, const UObject* obj)
     if (obj == NULL) {
         result.append("NULL");
     } else {
-        UClassID id = obj->getDynamicClassID();
-        if (id == UnicodeString::getStaticClassID()) {
-            result.append(*(UnicodeString*)obj);
-        } else if (id == Locale::getStaticClassID()) {
-            result.append(((Locale*)obj)->getName());
-        } else if (id == Integer::getStaticClassID()) {
-            sprintf(buffer, "%d", (int)((Integer*)obj)->_val);
+        const UnicodeString* s;
+        const Locale* loc;
+        const Integer* i;
+        if ((s = dynamic_cast<const UnicodeString*>(obj)) != NULL) {
+            result.append(*s);
+        } else if ((loc = dynamic_cast<const Locale*>(obj)) != NULL) {
+            result.append(loc->getName());
+        } else if ((i = dynamic_cast<const Integer*>(obj)) != NULL) {
+            sprintf(buffer, "%d", (int)i->_val);
             result.append(buffer);
         } else {
             sprintf(buffer, "%p", (const void*)obj);
@@ -455,7 +458,7 @@ ICUServiceTest::testAPI_One()
     // should not be able to locate invisible services
     {
         UErrorCode status = U_ZERO_ERROR;
-        UVector ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, status);
+        UVector ids(uprv_deleteUObject, uhash_compareUnicodeString, status);
         service.getVisibleIDs(ids, status);
         UnicodeString target = "en_US_BAR";
         confirmBoolean("18) find invisible", !ids.contains(&target));
@@ -478,7 +481,7 @@ public:
                 // have to implement cloneInstance.  Otherwise we could just tell the service
                 // what the object type is when we create it, and the default implementation
                 // could handle everything for us.  Phooey.
-        if (obj && obj->getDynamicClassID() == UnicodeString::getStaticClassID()) {
+        if (obj && dynamic_cast<UnicodeString*>(obj) != NULL) {
                         return ICUService::createSimpleFactory(obj, id, visible, status);
         }
         return NULL;
@@ -497,8 +500,9 @@ class TestStringService : public ICUService {
 
   virtual ICUServiceFactory* createSimpleFactory(UObject* obj, const UnicodeString& id, UBool visible, UErrorCode& /* status */) 
     {
-        if (obj && obj->getDynamicClassID() == UnicodeString::getStaticClassID()) {
-            return new SimpleFactory((UnicodeString*)obj, id, visible);
+        UnicodeString* s;
+        if (obj && (s = dynamic_cast<UnicodeString*>(obj)) != NULL) {
+            return new SimpleFactory(s, id, visible);
         }
         return NULL;
     }
@@ -547,7 +551,7 @@ class TestMultipleKeyStringFactory : public ICUServiceFactory {
     public:
     TestMultipleKeyStringFactory(const UnicodeString ids[], int32_t count, const UnicodeString& factoryID)
         : _status(U_ZERO_ERROR)
-        , _ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, count, _status)
+        , _ids(uprv_deleteUObject, uhash_compareUnicodeString, count, _status)
         , _factoryID(factoryID + ": ") 
     {
         for (int i = 0; i < count; ++i) {
@@ -676,7 +680,7 @@ ICUServiceTest::testAPI_Two()
     // iterate over the visual ids returned by the multiple factory
     {
         UErrorCode status = U_ZERO_ERROR;
-        UVector ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, 0, status);
+        UVector ids(uprv_deleteUObject, uhash_compareUnicodeString, 0, status);
         service.getVisibleIDs(ids, status);
         for (int i = 0; i < ids.size(); ++i) {
             const UnicodeString* id = (const UnicodeString*)ids[i];
@@ -797,7 +801,7 @@ ICUServiceTest::testAPI_Two()
 
     {
         UErrorCode status = U_ZERO_ERROR;
-        UVector ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, 0, status);
+        UVector ids(uprv_deleteUObject, uhash_compareUnicodeString, 0, status);
         service.getVisibleIDs(ids, status);
         for (int i = 0; i < ids.size(); ++i) {
             const UnicodeString* id = (const UnicodeString*)ids[i];
@@ -893,7 +897,7 @@ ICUServiceTest::testRBF()
     // list all of the resources 
     {
         UErrorCode status = U_ZERO_ERROR;
-        UVector ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, 0, status);
+        UVector ids(uprv_deleteUObject, uhash_compareUnicodeString, 0, status);
         service.getVisibleIDs(ids, status);
         logln("all visible ids:");
         for (int i = 0; i < ids.size(); ++i) {
@@ -1160,7 +1164,7 @@ void ICUServiceTest::testLocale() {
 
     {
         UErrorCode status = U_ZERO_ERROR;
-        UVector ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, 0, status);
+        UVector ids(uprv_deleteUObject, uhash_compareUnicodeString, 0, status);
         service.getVisibleIDs(ids, status);
         logln("all visible ids:");
         for (int i = 0; i < ids.size(); ++i) {
@@ -1172,7 +1176,7 @@ void ICUServiceTest::testLocale() {
     Locale::setDefault(loc, status);
     {
         UErrorCode status = U_ZERO_ERROR;
-        UVector ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, 0, status);
+        UVector ids(uprv_deleteUObject, uhash_compareUnicodeString, 0, status);
         service.getVisibleIDs(ids, status);
         logln("all visible ids:");
         for (int i = 0; i < ids.size(); ++i) {
@@ -1364,7 +1368,7 @@ void ICUServiceTest::testCoverage()
                   }
           }
 
-      UVector ids(uhash_deleteUnicodeString, uhash_compareUnicodeString, status);
+      UVector ids(uprv_deleteUObject, uhash_compareUnicodeString, status);
           // yuck, this is awkward to use.  All because we pass null in an overload.
           // TODO: change this.
           UnicodeString str("Greet");

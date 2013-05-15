@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-*   Copyright (C) 1997-2009, International Business Machines
+*   Copyright (C) 1997-2011, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 *   Date        Name        Description
@@ -247,7 +247,7 @@ U_NAMESPACE_BEGIN
  *
  * @see LocalPointerBase
  * @see LocalPointer
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
 U_DEFINE_LOCAL_OPEN_POINTER(LocalUTransliteratorPointer, UTransliterator, utrans_close);
 
@@ -510,6 +510,8 @@ utrans_transIncrementalUChars(const UTransliterator* trans,
 
 /* deprecated API ----------------------------------------------------------- */
 
+#ifndef U_HIDE_DEPRECATED_API
+
 /* see utrans.h documentation for why these functions are deprecated */
 
 /**
@@ -597,6 +599,8 @@ U_DEPRECATED int32_t U_EXPORT2
 utrans_getAvailableID(int32_t index,
                       char* buf,
                       int32_t bufCapacity);
+
+#endif  /* U_HIDE_DEPRECATED_API */
 
 #endif /* #if !UCONFIG_NO_TRANSLITERATION */
 

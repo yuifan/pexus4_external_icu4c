@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2009, International Business Machines Corporation and
+ * Copyright (c) 1997-2012, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -15,11 +15,34 @@
 #include "unicode/fmtable.h"
 #include "unicode/testlog.h"
 
+
+#if U_NO_DEFAULT_INCLUDE_UTF_HEADERS
+/* deprecated  - make tests pass with U_NO_DEFAULT_INCLUDE_UTF_HEADERS */
+#include "unicode/utf_old.h" 
+#endif
+
+/**
+ * \def ICU_USE_THREADS
+ *
+ * Enables multi-threaded testing. Moved here from uconfig.h.
+ * Default: enabled
+ *
+ * This switch used to allow thread support (use of mutexes) to be compiled out of ICU.
+ */
+#ifdef ICU_USE_THREADS
+    /* Use the predefined value. */
+#elif defined(APP_NO_THREADS)
+    /* APP_NO_THREADS is an old symbol. We'll honour it if present. */
+#   define ICU_USE_THREADS 0
+#else
+#   define ICU_USE_THREADS 1
+#endif
+
 U_NAMESPACE_USE
 
-#ifdef OS390
+#if U_PLATFORM == U_PF_OS390
 // avoid collision with math.h/log()
-// this must be after including utypes.h so that OS390 is actually defined
+// this must be after including utypes.h so that U_PLATFORM is actually defined
 #pragma map(IntlTest::log( const UnicodeString &message ),"logos390")
 #endif
 
@@ -67,18 +90,49 @@ UnicodeString toString(int32_t n);
         }                             \
         break
 
+// More convenient macros. These allow easy reordering of the test cases.
+//
+//| void MyTest::runIndexedTest(int32_t index, UBool exec,
+//|                             const char* &name, char* /*par*/) {
+//|     TESTCASE_AUTO_BEGIN;
+//|     TESTCASE_AUTO(TestSomething);
+//|     TESTCASE_AUTO(TestSomethingElse);
+//|     TESTCASE_AUTO(TestAnotherThing);
+//|     TESTCASE_AUTO_END;
+//| }
+#define TESTCASE_AUTO_BEGIN \
+    for(;;) { \
+        int32_t testCaseAutoNumber = 0
+
+#define TESTCASE_AUTO(test) \
+        if (index == testCaseAutoNumber++) { \
+            name = #test; \
+            if (exec) { \
+                logln(#test "---"); \
+                logln(); \
+                test(); \
+            } \
+            break; \
+        }
+
+#define TESTCASE_AUTO_END \
+        name = ""; \
+        break; \
+    }
+
 class IntlTest : public TestLog {
 public:
 
     IntlTest();
     // TestLog has a virtual destructor.
 
-    virtual UBool runTest( char* name = NULL, char* par = NULL ); // not to be overidden
+    virtual UBool runTest( char* name = NULL, char* par = NULL, char *baseName = NULL); // not to be overidden
 
     virtual UBool setVerbose( UBool verbose = TRUE );
     virtual UBool setNoErrMsg( UBool no_err_msg = TRUE );
     virtual UBool setQuick( UBool quick = TRUE );
     virtual UBool setLeaks( UBool leaks = TRUE );
+    virtual UBool setNotime( UBool no_time = TRUE );
     virtual UBool setWarnOnMissingData( UBool warn_on_missing_data = TRUE );
     virtual int32_t setThreadCount( int32_t count = 1);
 
@@ -145,10 +199,30 @@ public:
     static float random();
 
     /**
-     * Ascertain the version of ICU. Useful for 
-     * time bomb testing
+     * Returns true if u_getVersion() < major.minor.
      */
-    UBool isICUVersionAtLeast(const UVersionInfo x);
+    static UBool isICUVersionBefore(int major, int minor) {
+        return isICUVersionBefore(major, minor, 0);
+    }
+
+    /**
+     * Returns true if u_getVersion() < major.minor.milli.
+     */
+    static UBool isICUVersionBefore(int major, int minor, int milli);
+
+    /**
+     * Returns true if u_getVersion() >= major.minor.
+     */
+    static UBool isICUVersionAtLeast(int major, int minor) {
+        return isICUVersionAtLeast(major, minor, 0);
+    }
+
+    /**
+     * Returns true if u_getVersion() >= major.minor.milli.
+     */
+    static UBool isICUVersionAtLeast(int major, int minor, int milli) {
+        return !isICUVersionBefore(major, minor, milli);
+    }
 
     enum { kMaxProps = 16 };
 
@@ -164,6 +238,7 @@ protected:
                        const UnicodeString& actual, UBool possibleDataError=FALSE);
     UBool assertEquals(const char* message, const char* expected,
                        const char* actual);
+    UBool assertEquals(const char* message, int32_t expected, int32_t actual);
 #if !UCONFIG_NO_FORMATTING
     UBool assertEquals(const char* message, const Formattable& expected,
                        const Formattable& actual);
@@ -180,7 +255,7 @@ protected:
 
     virtual void runIndexedTest( int32_t index, UBool exec, const char* &name, char* par = NULL ); // overide !
 
-    virtual UBool runTestLoop( char* testname, char* par );
+    virtual UBool runTestLoop( char* testname, char* par, char *baseName );
 
     virtual int32_t IncErrorCount( void );
 
@@ -194,6 +269,7 @@ protected:
     UBool       quick;
     UBool       leaks;
     UBool       warn_on_missing_data;
+    UBool       no_time;
     int32_t     threadCount;
 
 private:
@@ -204,6 +280,8 @@ private:
     int32_t     dataErrorCount;
     IntlTest*   caller;
     char*       testPath;           // specifies subtests
+    
+    char basePath[1024];
 
     //FILE *testoutfp;
     void *testoutfp;
@@ -219,7 +297,12 @@ protected:
 
     static UnicodeString &prettify(const UnicodeString &source, UnicodeString &target);
     static UnicodeString prettify(const UnicodeString &source, UBool parseBackslash=FALSE);
+    // digits=-1 determines the number of digits automatically
     static UnicodeString &appendHex(uint32_t number, int32_t digits, UnicodeString &target);
+    static UnicodeString toHex(uint32_t number, int32_t digits=-1);
+    static inline UnicodeString toHex(int32_t number, int32_t digits=-1) {
+        return toHex((uint32_t)number, digits);
+    }
 
 public:
     static void setICU_DATA();       // Set up ICU_DATA if necessary.

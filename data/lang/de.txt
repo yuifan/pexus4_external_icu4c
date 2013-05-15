@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/de.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/de.xml
 // *
 // ***************************************************************************
 /**
@@ -12,8 +12,21 @@
 de{
     Keys{
         calendar{"Kalender"}
+        colAlternate{"Sortierung ohne Symbole"}
+        colBackwards{"Umgekehrte Sortierung von Akzenten"}
+        colCaseFirst{"Sortierung nach Groß- bzw. Kleinbuchstaben"}
+        colCaseLevel{"Sortierung nach Groß- oder Kleinschreibung"}
+        colHiraganaQuaternary{"Kana-Sortierung"}
+        colNormalization{"Normierte Sortierung"}
+        colNumeric{"Sortierung nach Zahlen"}
+        colStrength{"Sortierstärke"}
         collation{"Sortierung"}
         currency{"Währung"}
+        numbers{"Zahlen"}
+        timezone{"Zeitzone"}
+        va{"Lokale Variante"}
+        variableTop{"Nach Symbolen sortieren"}
+        x{"Privatnutzung"}
     }
     Languages{
         aa{"Afar"}
@@ -99,6 +112,7 @@ de{
         chp{"Chipewyan"}
         chr{"Cherokee"}
         chy{"Cheyenne"}
+        ckb{"Sorani"}
         cmc{"Cham-Sprache"}
         co{"Korsisch"}
         cop{"Koptisch"}
@@ -133,6 +147,7 @@ de{
         dv{"Maledivisch"}
         dyu{"Dyula-Sprache"}
         dz{"Bhutanisch"}
+        ebu{"Kiembu"}
         ee{"Ewe-Sprache"}
         efi{"Efik"}
         egy{"Ägyptisch"}
@@ -148,7 +163,7 @@ de{
         eo{"Esperanto"}
         es{"Spanisch"}
         es_419{"Lateinamerikanisches Spanisch"}
-        es_ES{"Iberisches Spanisch"}
+        es_ES{"Europäisches Spanisch"}
         et{"Estnisch"}
         eu{"Baskisch"}
         ewo{"Ewondo"}
@@ -170,7 +185,7 @@ de{
         frr{"Nordfriesisch"}
         frs{"Ostfriesisch"}
         fur{"Friulisch"}
-        fy{"Friesisch"}
+        fy{"Westfriesisch"}
         ga{"Irisch"}
         gaa{"Ga-Sprache"}
         gay{"Gayo"}
@@ -242,8 +257,9 @@ de{
         kaw{"Kawi"}
         kbd{"Kabardinisch"}
         kcg{"Tyap"}
+        kea{"Kabuverdianu"}
         kfo{"Koro"}
-        kg{"Kongo"}
+        kg{"Kongolesisch"}
         kha{"Khasi-Sprache"}
         khi{"Khoisan-Sprache"}
         kho{"Sakisch"}
@@ -289,6 +305,7 @@ de{
         lun{"Lunda-Sprache"}
         luo{"Luo-Sprache"}
         lus{"Lushai-Sprache"}
+        luy{"Olulujia"}
         lv{"Lettisch"}
         mad{"Maduresisch"}
         mag{"Khotta"}
@@ -300,13 +317,14 @@ de{
         mdf{"Moksha"}
         mdr{"Mandaresisch"}
         men{"Mende-Sprache"}
+        mfe{"Morisyen"}
         mg{"Malagassi-Sprache"}
         mga{"Mittelirisch"}
         mh{"Marschallesisch"}
         mi{"Maori"}
         mic{"Micmac-Sprache"}
         min{"Minangkabau-Sprache"}
-        mis{"(andere Sprache)"}
+        mis{"Andere Sprache"}
         mk{"Mazedonisch"}
         mkh{"Mon-Khmer-Sprache"}
         ml{"Malayalam"}
@@ -384,7 +402,7 @@ de{
         ps{"Paschtu"}
         pt{"Portugiesisch"}
         pt_BR{"Brasilianisches Portugiesisch"}
-        pt_PT{"Iberisches Portugiesisch"}
+        pt_PT{"Europäisches Portugiesisch"}
         qu{"Quechua"}
         raj{"Rajasthani"}
         rap{"Osterinsel-Sprache"}
@@ -525,6 +543,9 @@ de{
         zxx{"Keine Sprachinhalte"}
         zza{"Zaza"}
     }
+    LanguagesShort{
+        az{"Aserbaidschanisch"}
+    }
     Scripts{
         Arab{"Arabisch"}
         Armi{"Armi"}
@@ -539,7 +560,6 @@ de{
         Brai{"Blindenschrift"}
         Bugi{"Buginesisch"}
         Buhd{"Buhid"}
-        Cakm{"Cakm"}
         Cans{"UCAS"}
         Cari{"Karisch"}
         Cham{"Cham"}
@@ -565,8 +585,8 @@ de{
         Hang{"Hangul"}
         Hani{"Chinesisch"}
         Hano{"Hanunoo"}
-        Hans{"Vereinfachte Chinesische Schrift"}
-        Hant{"Traditionelle Chinesische Schrift"}
+        Hans{"Vereinfacht"}
+        Hant{"Traditionell"}
         Hebr{"Hebräisch"}
         Hira{"Hiragana"}
         Hmng{"Pahawh Hmong"}
@@ -582,7 +602,6 @@ de{
         Khmr{"Khmer"}
         Knda{"Kannada"}
         Kore{"Koreanisch"}
-        Kthi{"Kthi"}
         Lana{"Lanna"}
         Laoo{"Laotisch"}
         Latf{"Lateinisch - Fraktur-Variante"}
@@ -611,13 +630,9 @@ de{
         Osma{"Osmanisch"}
         Perm{"Altpermisch"}
         Phag{"Phags-pa"}
-        Phli{"Phli"}
-        Phlp{"Phlp"}
         Phlv{"Pahlavi"}
         Phnx{"Phönizisch"}
         Plrd{"Pollard Phonetisch"}
-        Prti{"Prti"}
-        Qaai{"Geerbter Schriftwert"}
         Rjng{"Rejang"}
         Roro{"Rongorongo"}
         Runr{"Runenschrift"}
@@ -637,7 +652,6 @@ de{
         Tale{"Tai Le"}
         Talu{"Tai Lue"}
         Taml{"Tamilisch"}
-        Tavt{"Tavt"}
         Telu{"Telugu"}
         Teng{"Tengwar"}
         Tfng{"Tifinagh"}
@@ -651,38 +665,95 @@ de{
         Xpeo{"Altpersisch"}
         Xsux{"Sumerisch-akkadische Keilschrift"}
         Yiii{"Yi"}
-        Zmth{"Zmth"}
-        Zsym{"Zsym"}
+        Zinh{"Geerbter Schriftwert"}
+        Zsym{"Symbole"}
         Zxxx{"Schriftlos"}
         Zyyy{"Unbestimmt"}
         Zzzz{"Uncodierte Schrift"}
+    }
+    Scripts%stand-alone{
+        Hans{"Vereinfachtes Chinesisch"}
+        Hant{"Traditionelles Chinesisch"}
     }
     Types{
         calendar{
             buddhist{"Buddhistischer Kalender"}
             chinese{"Chinesischer Kalender"}
+            coptic{"Koptischer Kalender"}
+            ethiopic{"Äthiopischer Kalender"}
+            ethiopic-amete-alem{"Äthiopischer Kalender \"Amete Alem\""}
             gregorian{"Gregorianischer Kalender"}
             hebrew{"Hebräischer Kalender"}
             indian{"Indischer Nationalkalender"}
             islamic{"Islamischer Kalender"}
             islamic-civil{"Bürgerlicher islamischer Kalender"}
             japanese{"Japanischer Kalender"}
+            persian{"Persischer Kalender"}
             roc{"Kalender der Republik China"}
         }
         collation{
             big5han{"Traditionelles Chinesisch - Big5"}
-            direct{"Direkte Sortierregeln"}
+            dictionary{"Lexikographische Sortierreihenfolge"}
+            ducet{"Unicode-Sortierung"}
             gb2312han{"Vereinfachtes Chinesisch - GB2312"}
-            phonebook{"Telefonbuch-Sortierregeln"}
+            phonebook{"Telefonbuch-Sortierung"}
+            phonetic{"Sortierung nach Phonetik"}
             pinyin{"Pinyin-Sortierregeln"}
+            reformed{"Reformierte Sortierreihenfolge"}
+            search{"Allgemeine Suche"}
+            searchjl{"Suche nach Anfangsbuchstaben des koreanischen Alphabets"}
             stroke{"Strichfolge"}
             traditional{"Traditionelle Sortierregeln"}
+            unihan{"Radikal-Strich-Sortierregeln"}
+        }
+        numbers{
+            arab{"Arabisch-indische Ziffern"}
+            arabext{"Erweiterte arabisch-indische Ziffern"}
+            armn{"Armenische Ziffern"}
+            armnlow{"Armenische Ziffern in Kleinschrift"}
+            beng{"Bengalische Ziffern"}
+            deva{"Devanagari-Ziffern"}
+            ethi{"Äthiopische Ziffern"}
+            finance{"Finanzzahlen"}
+            fullwide{"Vollbreite Ziffern"}
+            geor{"Georgische Ziffern"}
+            grek{"Griechische Ziffern"}
+            greklow{"Griechische Ziffern in Kleinschrift"}
+            gujr{"Gujarati-Ziffern"}
+            guru{"Gurmukhi-Ziffern"}
+            hanidec{"Chinesische Dezimalzahlen"}
+            hans{"Vereinfacht-chinesische Ziffern"}
+            hansfin{"Vereinfacht-chinesische Finanzziffern"}
+            hant{"Traditionell-chinesische Ziffern"}
+            hantfin{"Traditionell-chinesische Finanzziffern"}
+            hebr{"Hebräische Ziffern"}
+            jpan{"Japanische Ziffern"}
+            jpanfin{"Japanische Finanzziffern"}
+            khmr{"Khmer-Ziffern"}
+            knda{"Kannada-Ziffern"}
+            laoo{"Laotische Ziffern"}
+            latn{"Westliche Ziffern"}
+            mlym{"Malayalam-Ziffern"}
+            mong{"Mongolische Ziffern"}
+            mymr{"Myanmar-Ziffern"}
+            native{"Native Ziffern"}
+            orya{"Oriya-Ziffern"}
+            roman{"Römische Ziffern"}
+            romanlow{"Römische Ziffern in Kleinschrift"}
+            taml{"Tamilische Ziffern"}
+            tamldec{"Tamil-Ziffern"}
+            telu{"Telugu-Ziffern"}
+            thai{"Thai-Ziffern"}
+            tibt{"Tibetische Ziffern"}
+            traditional{"Traditionelle Zahlen"}
+            vaii{"Vai-Ziffern"}
         }
     }
     Variants{
         1606NICT{"Spätes Mittelfranzösisch"}
         1694ACAD{"Klassisches Französisch"}
         1901{"Alte deutsche Rechtschreibung"}
+        1959ACAD{"Akademisch"}
         1994{"Standardisierte Resianische Rechtschreibung"}
         1996{"Neue deutsche Rechtschreibung"}
         AREVELA{"Ostarmenisch"}
@@ -692,6 +763,7 @@ de{
         BOONT{"Boontling"}
         FONIPA{"IPA Phonetisch"}
         FONUPA{"Phonetisch (UPA)"}
+        KKCOR{"Allgemeine Rechtschreibung"}
         LIPAW{"Lipovaz-Dialekt"}
         MONOTON{"Monotonisch"}
         NEDIS{"Natisone-Dialekt"}
@@ -707,16 +779,19 @@ de{
         SCOUSE{"Scouse-Dialekt"}
         SOLBA{"Solbica-Dialekt"}
         TARASK{"Taraskievica-Orthographie"}
+        UCCOR{"Vereinheitlichte Rechtschreibung"}
+        UCRCOR{"Vereinheitlichte überarbeitete Rechtschreibung"}
         VALENCIA{"Valencianisch"}
         WADEGILE{"Wade-Giles"}
     }
-    Version{"2.0.48.64"}
+    Version{"2.0.78.47"}
     codePatterns{
         language{"Sprache: {0}"}
         script{"Schrift: {0}"}
         territory{"Region: {0}"}
     }
     localeDisplayPattern{
+        keyTypePattern{"{0}: {1}"}
         pattern{"{0} ({1})"}
         separator{", "}
     }

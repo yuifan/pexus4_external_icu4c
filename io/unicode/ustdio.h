@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1998-2010, International Business Machines
+*   Copyright (C) 1998-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -275,9 +275,9 @@ u_finit(FILE        *f,
  * is NULL, in which case the system default codepage will be used.
  * @return A new UFILE, or NULL if an error occurred. If an error occurs
  * the ownership of the FILE* stream remains with the caller.
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
-U_DRAFT UFILE* U_EXPORT2
+U_STABLE UFILE* U_EXPORT2
 u_fadopt(FILE     *f,
     const char    *locale,
     const char    *codepage);
@@ -302,9 +302,10 @@ u_fstropen(UChar      *stringBuf,
            const char *locale);
 
 /**
- * Close a UFILE.
+ * Close a UFILE. Implies u_fflush first.
  * @param file The UFILE to close.
  * @stable ICU 3.0
+ * @see u_fflush
  */
 U_STABLE void U_EXPORT2
 u_fclose(UFILE *file);
@@ -320,7 +321,7 @@ U_NAMESPACE_BEGIN
  *
  * @see LocalPointerBase
  * @see LocalPointer
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
 U_DEFINE_LOCAL_OPEN_POINTER(LocalUFILEPointer, UFILE, u_fclose);
 
@@ -344,6 +345,8 @@ u_feof(UFILE  *f);
  * converter/transliterator state. (That is, a logical break is
  * made in the output stream - for example if a different type of
  * output is desired.)  The underlying OS level file is also flushed.
+ * Note that for a stateful encoding, the converter may write additional
+ * bytes to return the stream to default state.
  * @param file The UFILE to flush.
  * @stable ICU 3.0
  */
@@ -439,6 +442,17 @@ U_STABLE UConverter* U_EXPORT2 u_fgetConverter(UFILE *f);
 /* Output functions */
 
 /**
+ * Write formatted data to <TT>stdout</TT>.
+ * @param patternSpecification A pattern specifying how <TT>u_printf</TT> will
+ * interpret the variable arguments received and format the data.
+ * @return The number of Unicode characters written to <TT>stdout</TT>
+ * @draft ICU 49
+ */
+U_DRAFT int32_t U_EXPORT2
+u_printf(const char *patternSpecification,
+         ... );
+
+/**
  * Write formatted data to a UFILE.
  * @param f The UFILE to which to write.
  * @param patternSpecification A pattern specifying how <TT>u_fprintf</TT> will
@@ -467,6 +481,25 @@ U_STABLE int32_t U_EXPORT2
 u_vfprintf(UFILE        *f,
            const char   *patternSpecification,
            va_list      ap);
+
+/**
+ * Write formatted data to <TT>stdout</TT>.
+ * @param patternSpecification A pattern specifying how <TT>u_printf_u</TT> will
+ * interpret the variable arguments received and format the data.
+ * @return The number of Unicode characters written to <TT>stdout</TT>
+ * @draft ICU 49
+ */
+U_DRAFT int32_t U_EXPORT2
+u_printf_u(const UChar *patternSpecification,
+           ... );
+
+/**
+ * Get a UFILE for <TT>stdout</TT>.
+ * @return UFILE that writes to <TT>stdout</TT>
+ * @draft ICU 49
+ */
+U_DRAFT UFILE * U_EXPORT2
+u_get_stdout(void);
 
 /**
  * Write formatted data to a UFILE.

@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (C) 1998-2009, International Business Machines Corporation 
+* Copyright (C) 1998-2011, International Business Machines Corporation
 * and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -107,26 +107,26 @@ static void TestAPI(void)
     }
 
     uprv_strcpy(src, "this is lower case");
-    if(T_CString_stricmp(src, "THIS is lower CASE") != 0){
-        log_err("FAIL: *****T_CString_stricmp() failed.");
+    if(uprv_stricmp(src, "THIS is lower CASE") != 0){
+        log_err("FAIL: *****uprv_stricmp() failed.");
     }
-    if((intValue=T_CString_stricmp(NULL, "first string is null") )!= -1){
-        log_err("FAIL: T_CString_stricmp() where the first string is null failed. Expected: -1, returned %d\n", intValue);
+    if((intValue=uprv_stricmp(NULL, "first string is null") )!= -1){
+        log_err("FAIL: uprv_stricmp() where the first string is null failed. Expected: -1, returned %d\n", intValue);
     }
-    if((intValue=T_CString_stricmp("second string is null", NULL)) != 1){
-        log_err("FAIL: T_CString_stricmp() where the second string is null failed. Expected: 1, returned %d\n", intValue);
+    if((intValue=uprv_stricmp("second string is null", NULL)) != 1){
+        log_err("FAIL: uprv_stricmp() where the second string is null failed. Expected: 1, returned %d\n", intValue);
     }
-    if((intValue=T_CString_stricmp(NULL, NULL)) != 0){
-        log_err("FAIL: T_CString_stricmp(NULL, NULL) failed.  Expected:  0, returned %d\n", intValue);;
+    if((intValue=uprv_stricmp(NULL, NULL)) != 0){
+        log_err("FAIL: uprv_stricmp(NULL, NULL) failed.  Expected:  0, returned %d\n", intValue);;
     }
-    if((intValue=T_CString_stricmp("", "")) != 0){
-        log_err("FAIL: T_CString_stricmp(\"\", \"\") failed.  Expected:  0, returned %d\n", intValue);;
+    if((intValue=uprv_stricmp("", "")) != 0){
+        log_err("FAIL: uprv_stricmp(\"\", \"\") failed.  Expected:  0, returned %d\n", intValue);;
     }
-    if((intValue=T_CString_stricmp("", "abc")) != -1){
-        log_err("FAIL: T_CString_stricmp(\"\", \"abc\") failed.  Expected: -1, returned %d\n", intValue);
+    if((intValue=uprv_stricmp("", "abc")) != -1){
+        log_err("FAIL: uprv_stricmp(\"\", \"abc\") failed.  Expected: -1, returned %d\n", intValue);
     }
-    if((intValue=T_CString_stricmp("abc", "")) != 1){
-        log_err("FAIL: T_CString_stricmp(\"abc\", \"\") failed.  Expected: 1, returned %d\n", intValue);
+    if((intValue=uprv_stricmp("abc", "")) != 1){
+        log_err("FAIL: uprv_stricmp(\"abc\", \"\") failed.  Expected: 1, returned %d\n", intValue);
     }
 
     temp=uprv_strdup("strdup");
@@ -136,26 +136,26 @@ static void TestAPI(void)
     uprv_free((char *)temp);
   
     uprv_strcpy(src, "this is lower case");
-    if(T_CString_strnicmp(src, "THIS", 4 ) != 0){
-        log_err("FAIL: *****T_CString_strnicmp() failed.");
+    if(uprv_strnicmp(src, "THIS", 4 ) != 0){
+        log_err("FAIL: *****uprv_strnicmp() failed.");
     }
-    if((intValue=T_CString_strnicmp(NULL, "first string is null", 10) )!= -1){
-        log_err("FAIL: T_CString_strnicmp() where the first string is null failed. Expected: -1, returned %d\n", intValue);
+    if((intValue=uprv_strnicmp(NULL, "first string is null", 10) )!= -1){
+        log_err("FAIL: uprv_strnicmp() where the first string is null failed. Expected: -1, returned %d\n", intValue);
     }
-    if((intValue=T_CString_strnicmp("second string is null", NULL, 10)) != 1){
-        log_err("FAIL: T_CString_strnicmp() where the second string is null failed. Expected: 1, returned %d\n", intValue);
+    if((intValue=uprv_strnicmp("second string is null", NULL, 10)) != 1){
+        log_err("FAIL: uprv_strnicmp() where the second string is null failed. Expected: 1, returned %d\n", intValue);
     }
-    if((intValue=T_CString_strnicmp(NULL, NULL, 10)) != 0){
-        log_err("FAIL: T_CString_strnicmp(NULL, NULL, 10) failed.  Expected:  0, returned %d\n", intValue);;
+    if((intValue=uprv_strnicmp(NULL, NULL, 10)) != 0){
+        log_err("FAIL: uprv_strnicmp(NULL, NULL, 10) failed.  Expected:  0, returned %d\n", intValue);;
     }
-    if((intValue=T_CString_strnicmp("", "", 10)) != 0){
-        log_err("FAIL: T_CString_strnicmp(\"\", \"\") failed.  Expected:  0, returned %d\n", intValue);;
+    if((intValue=uprv_strnicmp("", "", 10)) != 0){
+        log_err("FAIL: uprv_strnicmp(\"\", \"\") failed.  Expected:  0, returned %d\n", intValue);;
     }
-    if((intValue=T_CString_strnicmp("", "abc", 10)) != -1){
-        log_err("FAIL: T_CString_stricmp(\"\", \"abc\", 10) failed.  Expected: -1, returned %d\n", intValue);
+    if((intValue=uprv_strnicmp("", "abc", 10)) != -1){
+        log_err("FAIL: uprv_stricmp(\"\", \"abc\", 10) failed.  Expected: -1, returned %d\n", intValue);
     }
-    if((intValue=T_CString_strnicmp("abc", "", 10)) != 1){
-        log_err("FAIL: T_CString_strnicmp(\"abc\", \"\", 10) failed.  Expected: 1, returned %d\n", intValue);
+    if((intValue=uprv_strnicmp("abc", "", 10)) != 1){
+        log_err("FAIL: uprv_strnicmp(\"abc\", \"\", 10) failed.  Expected: 1, returned %d\n", intValue);
     }
     
 }
@@ -302,25 +302,25 @@ TestCompareInvEbcdicAsAscii() {
     static const char *const invStrings[][2]={
         /* invariant-character strings in ascending ASCII order */
         /* EBCDIC       native */
-        "",             "",
-        "\x6c",         "%",
-        "\xf0",         "0",
-        "\xf0\xf0",     "00",
-        "\xf0\xf0\x81", "00a",
-        "\x7e",         "=",
-        "\xc1",         "A",
-        "\xc1\xf0\xf0", "A00",
-        "\xc1\xf0\xf0", "A00",
-        "\xc1\xc1",     "AA",
-        "\xc1\xc1\xf0", "AA0",
-        "\x6d",         "_",
-        "\x81",         "a",
-        "\x81\xf0\xf0", "a00",
-        "\x81\xf0\xf0", "a00",
-        "\x81\x81",     "aa",
-        "\x81\x81\xf0", "aa0",
-        "\x81\x81\x81", "aaa",
-        "\x81\x81\x82", "aab"
+        { "",             "" },
+        { "\x6c",         "%" },
+        { "\xf0",         "0" },
+        { "\xf0\xf0",     "00" },
+        { "\xf0\xf0\x81", "00a" },
+        { "\x7e",         "=" },
+        { "\xc1",         "A" },
+        { "\xc1\xf0\xf0", "A00" },
+        { "\xc1\xf0\xf0", "A00" },
+        { "\xc1\xc1",     "AA" },
+        { "\xc1\xc1\xf0", "AA0" },
+        { "\x6d",         "_" },
+        { "\x81",         "a" },
+        { "\x81\xf0\xf0", "a00" },
+        { "\x81\xf0\xf0", "a00" },
+        { "\x81\x81",     "aa" },
+        { "\x81\x81\xf0", "aa0" },
+        { "\x81\x81\x81", "aaa" },
+        { "\x81\x81\x82", "aab" }
     };
     int32_t i;
     for(i=1; i<LENGTHOF(invStrings); ++i) {

@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2010, International Business Machines Corporation and
+ * Copyright (c) 1997-2012, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /********************************************************************************
@@ -32,7 +32,7 @@
 #include "unicode/uclean.h"
 #include "unicode/ucal.h"
 #include "uoptions.h"
-#include "putilimp.h" /* for uprv_getUTCtime() */
+#include "putilimp.h" /* for uprv_getRawUTCtime() */
 #ifdef URES_DEBUG
 #include "uresimp.h" /* for ures_dumpCacheContents() */
 #endif
@@ -41,9 +41,17 @@
 #   include <console.h>
 #endif
 
+#define CTST_MAX_ALLOC 8192
+/* Array used as a queue */
+static void * ctst_allocated_stuff[CTST_MAX_ALLOC] = {0};
+static int ctst_allocated = 0;
+static UBool ctst_free = FALSE;
+static int ctst_allocated_total = 0;
+
 #define CTST_LEAK_CHECK 1
+
 #ifdef CTST_LEAK_CHECK
-U_CFUNC void ctst_freeAll(void);
+static void ctst_freeAll(void);
 #endif
 
 static char* _testDataPath=NULL;
@@ -82,7 +90,7 @@ int main(int argc, const char* const argv[])
 
     U_MAIN_INIT_ARGS(argc, argv);
 
-    startTime = uprv_getUTCtime();
+    startTime = uprv_getRawUTCtime();
 
     gOrigArgc = argc;
     gOrigArgv = argv;
@@ -111,7 +119,7 @@ int main(int argc, const char* const argv[])
     fprintf(stderr, "After initial u_cleanup: RB cache %s empty.\n", ures_dumpCacheContents()?"WAS NOT":"was");
 #endif
 
-    while (REPEAT_TESTS > 0) {   /* Loop runs once per complete execution of the tests 
+    while (getTestOption(REPEAT_TESTS_OPTION) > 0) {   /* Loop runs once per complete execution of the tests
                                   *   used for -r  (repeat) test option.                */
         if (!initArgs(argc, argv, NULL, NULL)) {
             /* Error already displayed. */
@@ -129,7 +137,7 @@ int main(int argc, const char* const argv[])
                 "#### ERROR! %s: u_init() failed with status = \"%s\".\n" 
                 "*** Check the ICU_DATA environment variable and \n"
                 "*** check that the data files are present.\n", argv[0], u_errorName(errorCode));
-                if(!WARN_ON_MISSING_DATA) {
+                if(!getTestOption(WARN_ON_MISSING_DATA_OPTION)) {
                     fprintf(stderr, "*** Exiting.  Use the '-w' option if data files were\n*** purposely removed, to continue test anyway.\n");
                     u_cleanup();
                     return 1;
@@ -148,7 +156,7 @@ int main(int argc, const char* const argv[])
                     "*** %s! The converter for " TRY_CNV_2 " cannot be opened.\n"
                     "*** Check the ICU_DATA environment variable and \n"
                     "*** check that the data files are present.\n", warnOrErr);
-            if(!WARN_ON_MISSING_DATA) {
+            if(!getTestOption(WARN_ON_MISSING_DATA_OPTION)) {
                 fprintf(stderr, "*** Exitting.  Use the '-w' option if data files were\n*** purposely removed, to continue test anyway.\n");
                 u_cleanup();
                 return 1;
@@ -164,7 +172,7 @@ int main(int argc, const char* const argv[])
                     "*** %s! The \"en\" locale resource bundle cannot be opened.\n"
                     "*** Check the ICU_DATA environment variable and \n"
                     "*** check that the data files are present.\n", warnOrErr);
-            if(!WARN_ON_MISSING_DATA) {
+            if(!getTestOption(WARN_ON_MISSING_DATA_OPTION)) {
                 fprintf(stderr, "*** Exitting.  Use the '-w' option if data files were\n*** purposely removed, to continue test anyway.\n");
                 u_cleanup();
                 return 1;
@@ -183,7 +191,7 @@ int main(int argc, const char* const argv[])
         } else {
             fprintf(stderr,
                     "*** %s! Can not open a resource bundle for the default locale %s\n", warnOrErr, uloc_getDefault());
-            if(!WARN_ON_MISSING_DATA) {
+            if(!getTestOption(WARN_ON_MISSING_DATA_OPTION)) {
                 fprintf(stderr, "*** Exitting.  Use the '-w' option if data files were\n"
                     "*** purposely removed, to continue test anyway.\n");
                 u_cleanup();
@@ -200,8 +208,9 @@ int main(int argc, const char* const argv[])
         /*  Tests acutally run HERE.   TODO:  separate command line option parsing & setting from test execution!! */
         nerrors = runTestRequest(root, argc, argv);
 
-        if (--REPEAT_TESTS > 0) {
-            printf("Repeating tests %d more time(s)\n", REPEAT_TESTS);
+        setTestOption(REPEAT_TESTS_OPTION, DECREMENT_OPTION_VALUE);
+        if (getTestOption(REPEAT_TESTS_OPTION) > 0) {
+            printf("Repeating tests %d more time(s)\n", getTestOption(REPEAT_TESTS_OPTION));
         }
         cleanUpTestTree(root);
 
@@ -209,6 +218,10 @@ int main(int argc, const char* const argv[])
         ctst_freeAll();
         /* To check for leaks */
         u_cleanup(); /* nuke the hashtable.. so that any still-open cnvs are leaked */
+        
+        if(getTestOption(VERBOSITY_OPTION) && ctst_allocated_total>0) {
+          fprintf(stderr,"ctst_freeAll():  cleaned up after %d allocations (queue of %d)\n", ctst_allocated_total, CTST_MAX_ALLOC);
+        }
 #ifdef URES_DEBUG
         if(ures_dumpCacheContents()) {
           fprintf(stderr, "Error: After final u_cleanup, RB cache was not empty.\n");
@@ -225,7 +238,7 @@ int main(int argc, const char* const argv[])
         fprintf(stderr, "There were %d blocks leaked!\n", ALLOCATION_COUNT);
         nerrors++;
     }
-    endTime = uprv_getUTCtime();
+    endTime = uprv_getRawUTCtime();
     diffTime = (int32_t)(endTime - startTime);
     printf("Elapsed Time: %02d:%02d:%02d.%03d\n",
         (int)((diffTime%U_MILLIS_PER_DAY)/U_MILLIS_PER_HOUR),
@@ -493,7 +506,7 @@ char *aescstrdup(const UChar* unichars,int32_t length){
     const void *p;
     UErrorCode errorCode = U_ZERO_ERROR;
 #if U_CHARSET_FAMILY==U_EBCDIC_FAMILY
-#   ifdef OS390
+#   if U_PLATFORM == U_PF_OS390
         static const char convName[] = "ibm-1047";
 #   else
         static const char convName[] = "ibm-37";
@@ -611,13 +624,9 @@ U_CFUNC void ctest_resetTimeZone(void) {
 #endif
 }
 
-#define CTST_MAX_ALLOC 8192
-/* Array used as a queue */
-static void * ctst_allocated_stuff[CTST_MAX_ALLOC] = {0};
-static int ctst_allocated = 0;
-static UBool ctst_free = FALSE;
 
 void *ctst_malloc(size_t size) {
+  ctst_allocated_total++;
     if(ctst_allocated >= CTST_MAX_ALLOC - 1) {
         ctst_allocated = 0;
         ctst_free = TRUE;
@@ -629,14 +638,14 @@ void *ctst_malloc(size_t size) {
 }
 
 #ifdef CTST_LEAK_CHECK
-void ctst_freeAll() {
+static void ctst_freeAll() {
     int i;
-    if(ctst_free == 0) {
+    if(ctst_free == FALSE) { /* only free up to the allocated mark */
         for(i=0; i<ctst_allocated; i++) {
             free(ctst_allocated_stuff[i]);
             ctst_allocated_stuff[i] = NULL;
         }
-    } else {
+    } else { /* free all */
         for(i=0; i<CTST_MAX_ALLOC; i++) {
             free(ctst_allocated_stuff[i]);
             ctst_allocated_stuff[i] = NULL;
@@ -691,9 +700,19 @@ U_CFUNC UBool assertEquals(const char* message, const char* expected,
  *--------------------------------------------------------------------
  */
 
-U_CFUNC UBool isICUVersionAtLeast(const UVersionInfo x) {
-    UVersionInfo v;
-    u_getVersion(v);
-    return (uprv_memcmp(v, x, U_MAX_VERSION_LENGTH) >= 0);
+U_CFUNC UBool isICUVersionBefore(int major, int minor, int milli) {
+    UVersionInfo iv;
+    UVersionInfo ov;
+    ov[0] = (uint8_t)major;
+    ov[1] = (uint8_t)minor;
+    ov[2] = (uint8_t)milli;
+    ov[3] = 0;
+    u_getVersion(iv);
+    return uprv_memcmp(iv, ov, U_MAX_VERSION_LENGTH) < 0;
 }
+
+U_CFUNC UBool isICUVersionAtLeast(int major, int minor, int milli) {
+    return !isICUVersionBefore(major, minor, milli);
+}
+
 #endif

@@ -1,14 +1,16 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/sv_FI.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/sv_FI.xml
 // *
 // ***************************************************************************
 sv_FI{
     Countries{
-        UM{"USA:s yttre öar"}
+        BQ{"Bonaire, S:t Eustatius och Saba"}
+        MF{"S:t Martin (franska delen)"}
+        SD{"Nordsudan"}
     }
-    Version{"2.0.45.99"}
+    Version{"2.0.75.99"}
 }

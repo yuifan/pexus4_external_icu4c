@@ -1,6 +1,6 @@
 /****************************************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2006, International Business Machines Corporation and
+ * Copyright (c) 1997-2012, International Business Machines Corporation and
  * others. All Rights Reserved.
  * Modification History:
  *
@@ -9,6 +9,8 @@
  ****************************************************************************************/
 
 #include <string.h>
+#include "utypeinfo.h"  // for 'typeid' to work
+
 #include "unicode/chariter.h"
 #include "unicode/ustring.h"
 #include "unicode/unistr.h"
@@ -16,6 +18,7 @@
 #include "unicode/uchriter.h"
 #include "unicode/uiter.h"
 #include "unicode/putil.h"
+#include "unicode/utf16.h"
 #include "citrtest.h"
 
 
@@ -100,20 +103,20 @@ public:
         case kStart:
             pos = begin;
             if(delta > 0) {
-                UTF_FWD_N(text, pos, end, delta);
+                U16_FWD_N(text, pos, end, delta);
             }
             break;
         case kCurrent:
             if(delta > 0) {
-                UTF_FWD_N(text, pos, end, delta);
+                U16_FWD_N(text, pos, end, delta);
             } else {
-                UTF_BACK_N(text, begin, pos, -delta);
+                U16_BACK_N(text, begin, pos, -delta);
             }
             break;
         case kEnd:
             pos = end;
             if(delta < 0) {
-                UTF_BACK_N(text, begin, pos, -delta);
+                U16_BACK_N(text, begin, pos, -delta);
             }
             break;
         default:
@@ -664,7 +667,7 @@ void CharIterTest::TestIterationUChar32() {
         c=iter.first32PostInc();
         if(c != text.char32At(i))
             errln("first32PostInc failed.  Expected->%X Got->%X", text.char32At(i), c);
-        if(iter.getIndex() != UTF16_CHAR_LENGTH(c) + i)
+        if(iter.getIndex() != U16_LENGTH(c) + i)
             errln((UnicodeString)"getIndex() after first32PostInc() failed");
 
         iter.setToStart();
@@ -1081,7 +1084,7 @@ public:
     virtual UBool operator==(const ForwardCharacterIterator &that) const {
         return
             this==&that ||
-            getDynamicClassID()==that.getDynamicClassID() && pos==((SubCharIter &)that).pos;
+            (typeid(*this)==typeid(that) && pos==((SubCharIter &)that).pos);
     }
 
     virtual int32_t hashCode() const {

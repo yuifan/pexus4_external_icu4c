@@ -1,6 +1,6 @@
 /********************************************************************
- * COPYRIGHT: 
- * Copyright (c) 1997-2010, International Business Machines
+ * COPYRIGHT:
+ * Copyright (c) 1997-2012, International Business Machines
  * Corporation and others. All Rights Reserved.
  ********************************************************************/
 
@@ -9,6 +9,7 @@
  */
 
 #include "unicode/utypes.h"
+#include "unicode/localpointer.h"
 
 #if !UCONFIG_NO_FORMATTING
 
@@ -55,6 +56,9 @@
 #include "tufmtts.h"        // TimeUnitTest
 #include "locnmtst.h"       // LocaleDisplayNamesTest
 #include "dcfmtest.h"       // DecimalFormatTest
+#include "listformattertest.h"  // ListFormatterTest
+
+extern IntlTest *createGenderInfoTest();
 
 #define TESTCLASS(id, TestClass)          \
     case id:                              \
@@ -126,10 +130,21 @@ void IntlTestFormat::runIndexedTest( int32_t index, UBool exec, const char* &nam
         TESTCLASS(36,PluralFormatTest);
         TESTCLASS(37,DateIntervalFormatTest);
         TESTCLASS(38,TimeUnitTest);
-	    TESTCLASS(39,SelectFormatTest);
-	    TESTCLASS(40,LocaleDisplayNamesTest);
+        TESTCLASS(39,SelectFormatTest);
+        TESTCLASS(40,LocaleDisplayNamesTest);
+#if !UCONFIG_NO_REGULAR_EXPRESSIONS
         TESTCLASS(41,DecimalFormatTest);
-
+#endif
+        TESTCLASS(42,ListFormatterTest);
+        case 43:
+          name = "GenderInfoTest";
+          if (exec) {
+            logln("GenderInfoTest test---");
+            logln((UnicodeString)"");
+            LocalPointer<IntlTest> test(createGenderInfoTest());
+            callTest(*test, par);
+          }
+          break;
         default: name = ""; break; //needed to end loop
     }
     if (exec) {

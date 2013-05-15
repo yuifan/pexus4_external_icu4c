@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1998-2008, International Business Machines
+*   Copyright (C) 1998-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -27,6 +27,8 @@
 #include "unicode/ucnv.h"
 #include "unicode/ucnv_err.h"
 #include "unicode/uset.h"
+#include "unicode/utf.h"
+#include "unicode/utf16.h"
 #include "putilimp.h"
 #include "cmemory.h"
 #include "cstring.h"
@@ -51,13 +53,15 @@ static const UAmbiguousConverter ambiguousConverters[]={
     { "ibm-943_P130-1999", 0xa5 },
     { "ibm-946_P100-1995", 0xa5 },
     { "ibm-33722_P120-1999", 0xa5 },
+    { "ibm-1041_P100-1995", 0xa5 },
     /*{ "ibm-54191_P100-2006", 0xa5 },*/
     /*{ "ibm-62383_P100-2007", 0xa5 },*/
     /*{ "ibm-891_P100-1995", 0x20a9 },*/
     { "ibm-944_P100-1995", 0x20a9 },
     { "ibm-949_P110-1999", 0x20a9 },
     { "ibm-1363_P110-1997", 0x20a9 },
-    { "ISO_2022,locale=ko,version=0", 0x20a9 }
+    { "ISO_2022,locale=ko,version=0", 0x20a9 },
+    { "ibm-1088_P100-1995", 0x20a9 }
 };
 
 /*Calls through createConverter */
@@ -2847,14 +2851,12 @@ ucnv_fromUCountPending(const UConverter* cnv, UErrorCode* status)
         return -1;
     }
 
-    if(cnv->preFromULength > 0){
+    if(cnv->preFromUFirstCP >= 0){
         return U16_LENGTH(cnv->preFromUFirstCP)+cnv->preFromULength ;
     }else if(cnv->preFromULength < 0){
         return -cnv->preFromULength ;
     }else if(cnv->fromUChar32 > 0){
         return 1;
-    }else if(cnv->preFromUFirstCP >0){
-        return U16_LENGTH(cnv->preFromUFirstCP);
     }
     return 0; 
 
@@ -2879,6 +2881,30 @@ ucnv_toUCountPending(const UConverter* cnv, UErrorCode* status){
         return cnv->toULength;
     }
     return 0;
+}
+
+U_CAPI UBool U_EXPORT2
+ucnv_isFixedWidth(UConverter *cnv, UErrorCode *status){
+    if (U_FAILURE(*status)) {
+        return FALSE;
+    }
+
+    if (cnv == NULL) {
+        *status = U_ILLEGAL_ARGUMENT_ERROR;
+        return FALSE;
+    }
+
+    switch (ucnv_getType(cnv)) {
+        case UCNV_SBCS:
+        case UCNV_DBCS:
+        case UCNV_UTF32_BigEndian:
+        case UCNV_UTF32_LittleEndian:
+        case UCNV_UTF32:
+        case UCNV_US_ASCII:
+            return TRUE;
+        default:
+            return FALSE;
+    }
 }
 #endif
 

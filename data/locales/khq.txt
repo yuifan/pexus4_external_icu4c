@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/khq.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/khq.xml
 // *
 // ***************************************************************************
 /**
@@ -17,26 +17,16 @@ khq{
         "Latn",
     }
     NumberElements{
-        ".",
-        " ",
-        ";",
-        "%",
-        "0",
-        "#",
-        "-",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
+        latn{
+            patterns{
+                currencyFormat{"#,##0.00¤"}
+            }
+            symbols{
+                group{" "}
+            }
+        }
     }
-    NumberPatterns{
-        "#,##0.###",
-        "#,##0.00¤",
-        "#,##0%",
-        "#E0",
-    }
-    Version{"2.0.45.90"}
+    Version{"2.0.78.30"}
     calendar{
         gregorian{
             AmPmMarkers{
@@ -62,26 +52,25 @@ khq{
                 M{"M"}
                 MMM{"MMM"}
                 MMMEd{"E d MMM"}
-                MMMMEd{"EEE d MMMM"}
+                MMMMEd{"E d MMMM"}
                 MMMMd{"d MMMM"}
                 MMMd{"d MMM"}
                 MMMdd{"dd MMM"}
                 MMd{"d/MM"}
                 MMdd{"dd/MM"}
                 Md{"d/M"}
-                Med{"EEE d/M"}
                 ms{"m:ss"}
                 y{"y"}
                 yM{"M/y"}
-                yMEd{"EEE d/M/y"}
+                yMEd{"E d/M/y"}
                 yMMM{"MMM y"}
-                yMMMEd{"EEE d MMM y"}
+                yMMMEd{"E d MMM y"}
                 yMMMM{"MMMM y"}
-                yQ{"'T'Q y"}
                 yQQQ{"QQQ y"}
+                yQQQQ{"QQQQ y"}
                 yyMM{"MM/yy"}
                 yyMMM{"MMM yy"}
-                yyMMMEEEd{"EEE d MMM yy"}
+                yyMMMEd{"E d MMM yy"}
                 yyMMMd{"d MMM yy"}
                 yyyyMMMM{"MMMM yyyy"}
             }
@@ -92,8 +81,8 @@ khq{
                         "Ati",
                         "Ata",
                         "Ala",
-                        "Ala",
-                        "Ala",
+                        "Alm",
+                        "Alj",
                         "Ass",
                     }
                     wide{
@@ -157,9 +146,6 @@ khq{
                 }
                 week{
                     dn{"Hebu"}
-                }
-                weekday{
-                    dn{"Jaari"}
                 }
                 year{
                     dn{"Jiiri"}
@@ -226,7 +212,7 @@ khq{
                     }
                     wide{
                         "Arrubu 1",
-                        "Arrubu 3",
+                        "Arrubu 2",
                         "Arrubu 3",
                         "Arrubu 4",
                     }
@@ -235,8 +221,8 @@ khq{
         }
     }
     delimiters{
-        alternateQuotationEnd{"»"}
-        alternateQuotationStart{"«"}
+        alternateQuotationEnd{"’"}
+        alternateQuotationStart{"‘"}
         quotationEnd{"”"}
         quotationStart{"“"}
     }

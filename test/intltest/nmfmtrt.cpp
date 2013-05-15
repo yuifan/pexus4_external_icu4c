@@ -1,6 +1,6 @@
 /***********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2009, International Business Machines Corporation
+ * Copyright (c) 1997-2011, International Business Machines Corporation
  * and others. All Rights Reserved.
  ***********************************************************************/
 
@@ -146,7 +146,7 @@ NumberFormatRoundTripTest::start()
 void 
 NumberFormatRoundTripTest::test(NumberFormat *fmt)
 {
-#if IEEE_754 && !defined(OS400)
+#if IEEE_754 && U_PLATFORM != U_PF_OS400
     test(fmt, uprv_getNaN());
     test(fmt, uprv_getInfinity());
     test(fmt, -uprv_getInfinity());
@@ -167,10 +167,10 @@ NumberFormatRoundTripTest::test(NumberFormat *fmt)
         test(fmt, uprv_floor((randomDouble(10000))));
         test(fmt, randomDouble(1e50));
         test(fmt, randomDouble(1e-50));
-#if !defined(OS390) && !defined(OS400)
+#if !(U_PF_OS390 <= U_PLATFORM && U_PLATFORM <= U_PF_OS400)
         test(fmt, randomDouble(1e100));
 #elif IEEE_754
-        test(fmt, randomDouble(1e75));    /*OS390 and OS400*/
+        test(fmt, randomDouble(1e75));
 #endif /* OS390 and OS400 */
         // {sfb} When formatting with a percent instance, numbers very close to
         // DBL_MAX will fail the round trip.  This is because:
@@ -182,15 +182,16 @@ NumberFormatRoundTripTest::test(NumberFormat *fmt)
         // I'll get around this by dividing by the multiplier to make sure
         // the double will stay in range.
         //if(fmt->getMultipler() == 1)
-        if(fmt->getDynamicClassID() == DecimalFormat::getStaticClassID())
+        DecimalFormat *df = dynamic_cast<DecimalFormat *>(fmt);
+        if(df != NULL)
         {
-#if !defined(OS390) && !defined(OS400)
+#if !(U_PF_OS390 <= U_PLATFORM && U_PLATFORM <= U_PF_OS400)
             /* DBL_MAX/2 is here because randomDouble does a *2 in the math */
-            test(fmt, randomDouble(DBL_MAX/2.0) / ((DecimalFormat*)fmt)->getMultiplier());
+            test(fmt, randomDouble(DBL_MAX/2.0) / df->getMultiplier());
 #elif IEEE_754
-            test(fmt, randomDouble(1e75) / ((DecimalFormat*)fmt)->getMultiplier());   
+            test(fmt, randomDouble(1e75) / df->getMultiplier());
 #else
-            test(fmt, randomDouble(1e65) / ((DecimalFormat*)fmt)->getMultiplier());   /*OS390*/
+            test(fmt, randomDouble(1e65) / df->getMultiplier());
 #endif
         }
 
@@ -198,8 +199,8 @@ NumberFormatRoundTripTest::test(NumberFormat *fmt)
         // These machines and compilers don't fully support denormalized doubles,
         test(fmt, randomDouble(1e-292));
         test(fmt, randomDouble(1e-100));
-#elif defined(OS390) || defined(OS400)
-        // i5/OS (OS400) throws exceptions on denormalized numbers
+#elif U_PF_OS390 <= U_PLATFORM && U_PLATFORM <= U_PF_OS400
+        // i5/OS (OS/400) throws exceptions on denormalized numbers
 #   if IEEE_754
         test(fmt, randomDouble(1e-78));
         test(fmt, randomDouble(1e-78));
@@ -229,8 +230,9 @@ void
 NumberFormatRoundTripTest::test(NumberFormat *fmt, const Formattable& value)
 {
     fmt->setMaximumFractionDigits(999);
-    if(fmt->getDynamicClassID() == DecimalFormat::getStaticClassID()) {
-        ((DecimalFormat *)fmt)->setRoundingIncrement(0.0);
+    DecimalFormat *df = dynamic_cast<DecimalFormat *>(fmt);
+    if(df != NULL) {
+        df->setRoundingIncrement(0.0);
     }
     UErrorCode status = U_ZERO_ERROR;
     UnicodeString s, s2, temp;

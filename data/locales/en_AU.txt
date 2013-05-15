@@ -1,19 +1,14 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/en_AU.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/en_AU.xml
 // *
 // ***************************************************************************
 en_AU{
-    NumberPatterns{
-        "#,##0.###",
-        "¤#,##0.00",
-        "#,##0%",
-        "#E0",
-    }
-    Version{"2.0.47.52"}
+    %%Parent{"en_GB"}
+    Version{"2.0.78.47"}
     calendar{
         gregorian{
             DateTimePatterns{
@@ -34,11 +29,8 @@ en_AU{
             availableFormats{
                 MEd{"E, d/M"}
                 MMMEd{"E, d MMM"}
-                MMMMd{"d MMMM"}
-                MMdd{"dd/MM"}
-                yMEd{"EEE, d/M/y"}
-                yyyyMM{"MM/yyyy"}
-                yyyyMMMM{"MMMM y"}
+                yMEd{"E, d/M/y"}
+                yMd{"d/M/y"}
             }
             intervalFormats{
                 M{
@@ -84,9 +76,6 @@ en_AU{
                 hv{
                     a{"h a - h a v"}
                     h{"h-h a v"}
-                }
-                y{
-                    y{"y-y"}
                 }
                 yM{
                     M{"MM/yy - MM/yy"}

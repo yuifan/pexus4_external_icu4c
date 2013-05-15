@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-*   Copyright (C) 1996-2009, International Business Machines
+*   Copyright (C) 1996-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 */
@@ -21,8 +21,10 @@
 #include "unicode/numfmt.h"
 #include "unicode/dtfmtsym.h"
 #include "unicode/ustring.h"
+#include "unicode/udisplaycontext.h"
 #include "cpputils.h"
 #include "reldtfmt.h"
+#include "umutex.h"
 
 U_NAMESPACE_USE
 
@@ -32,8 +34,8 @@ U_NAMESPACE_USE
  * @param status error code, will be set to failure if there is a familure or the fmt is NULL.
  */
 static void verifyIsSimpleDateFormat(const UDateFormat* fmt, UErrorCode *status) {
-   if(!U_FAILURE(*status) && 
-       ((DateFormat*)fmt)->getDynamicClassID()!=SimpleDateFormat::getStaticClassID()) {
+   if(U_SUCCESS(*status) &&
+       dynamic_cast<const SimpleDateFormat*>(reinterpret_cast<const DateFormat*>(fmt))==NULL) {
        *status = U_ILLEGAL_ARGUMENT_ERROR;
    }
 }
@@ -73,7 +75,8 @@ static UCalendarDateFields gDateFieldMapping[] = {
     UCAL_MONTH,                // UDAT_QUARTER_FIELD = 27
     UCAL_MONTH,                // UDAT_STANDALONE_QUARTER_FIELD = 28
     UCAL_ZONE_OFFSET,          // UDAT_TIMEZONE_SPECIAL_FIELD = 29
-    UCAL_FIELD_COUNT,          // UDAT_FIELD_COUNT = 30
+    UCAL_YEAR,                 // UDAT_YEAR_NAME_FIELD = 30
+    UCAL_FIELD_COUNT,          // UDAT_FIELD_COUNT = 31
     // UCAL_IS_LEAP_MONTH is not the target of a mapping
 };
 
@@ -81,6 +84,40 @@ U_CAPI UCalendarDateFields U_EXPORT2
 udat_toCalendarDateField(UDateFormatField field) {
   return gDateFieldMapping[field];
 }
+
+/* For now- one opener. */
+static UDateFormatOpener gOpener = NULL;
+
+U_INTERNAL void U_EXPORT2
+udat_registerOpener(UDateFormatOpener opener, UErrorCode *status)
+{
+  if(U_FAILURE(*status)) return;
+  umtx_lock(NULL);
+  if(gOpener==NULL) {
+    gOpener = opener;
+  } else {
+    *status = U_ILLEGAL_ARGUMENT_ERROR;
+  }
+  umtx_unlock(NULL);
+}
+
+U_INTERNAL UDateFormatOpener U_EXPORT2
+udat_unregisterOpener(UDateFormatOpener opener, UErrorCode *status)
+{
+  if(U_FAILURE(*status)) return NULL;
+  UDateFormatOpener oldOpener = NULL;
+  umtx_lock(NULL);
+  if(gOpener==NULL || gOpener!=opener) {
+    *status = U_ILLEGAL_ARGUMENT_ERROR;
+  } else {
+    oldOpener=gOpener;
+    gOpener=NULL;
+  }
+  umtx_unlock(NULL);
+  return oldOpener;
+}
+
+
 
 U_CAPI UDateFormat* U_EXPORT2
 udat_open(UDateFormatStyle  timeStyle,
@@ -96,7 +133,13 @@ udat_open(UDateFormatStyle  timeStyle,
     if(U_FAILURE(*status)) {
         return 0;
     }
-    if(timeStyle != UDAT_IGNORE) {
+    if(gOpener!=NULL) { // if it's registered
+      fmt = (DateFormat*) (*gOpener)(timeStyle,dateStyle,locale,tzID,tzIDLength,pattern,patternLength,status);
+      if(fmt!=NULL) {
+        return (UDateFormat*)fmt;
+      } // else fall through.
+    }
+    if(timeStyle != UDAT_PATTERN) {
         if(locale == 0) {
             fmt = DateFormat::createDateTimeInstance((DateFormat::EStyle)dateStyle,
                 (DateFormat::EStyle)timeStyle);
@@ -337,13 +380,16 @@ udat_toPattern(    const   UDateFormat     *fmt,
         res.setTo(result, 0, resultLength);
     }
 
-    if ( ((DateFormat*)fmt)->getDynamicClassID()==SimpleDateFormat::getStaticClassID() ) {
+    const DateFormat *df=reinterpret_cast<const DateFormat *>(fmt);
+    const SimpleDateFormat *sdtfmt=dynamic_cast<const SimpleDateFormat *>(df);
+    const RelativeDateFormat *reldtfmt;
+    if (sdtfmt!=NULL) {
         if(localized)
-            ((SimpleDateFormat*)fmt)->toLocalizedPattern(res, *status);
+            sdtfmt->toLocalizedPattern(res, *status);
         else
-            ((SimpleDateFormat*)fmt)->toPattern(res);
-    } else if ( !localized && ((DateFormat*)fmt)->getDynamicClassID()==RelativeDateFormat::getStaticClassID() ) {
-        ((RelativeDateFormat*)fmt)->toPattern(res, *status);
+            sdtfmt->toPattern(res);
+    } else if (!localized && (reldtfmt=dynamic_cast<const RelativeDateFormat *>(df))!=NULL) {
+        reldtfmt->toPattern(res, *status);
     } else {
         *status = U_ILLEGAL_ARGUMENT_ERROR;
         return -1;
@@ -382,11 +428,16 @@ udat_getSymbols(const   UDateFormat     *fmt,
                 int32_t                 resultLength,
                 UErrorCode              *status)
 {
-    verifyIsSimpleDateFormat(fmt, status);
-    if(U_FAILURE(*status)) return -1;
-
-    const DateFormatSymbols *syms = 
-        ((SimpleDateFormat*)fmt)->getDateFormatSymbols();
+    const DateFormatSymbols *syms;
+    const SimpleDateFormat* sdtfmt;
+    const RelativeDateFormat* rdtfmt;
+    if ((sdtfmt = dynamic_cast<const SimpleDateFormat*>(reinterpret_cast<const DateFormat*>(fmt))) != NULL) {
+    	syms = sdtfmt->getDateFormatSymbols();
+    } else if ((rdtfmt = dynamic_cast<const RelativeDateFormat*>(reinterpret_cast<const DateFormat*>(fmt))) != NULL) {
+    	syms = rdtfmt->getDateFormatSymbols();
+    } else {
+        return -1;
+    }
     int32_t count;
     const UnicodeString *res = NULL;
 
@@ -492,15 +543,16 @@ U_CAPI int32_t U_EXPORT2
 udat_countSymbols(    const    UDateFormat                *fmt,
             UDateFormatSymbolType    type)
 {
-    UErrorCode status = U_ZERO_ERROR;
-    
-    verifyIsSimpleDateFormat(fmt, &status);
-    if(U_FAILURE(status)) {
+    const DateFormatSymbols *syms;
+    const SimpleDateFormat* sdtfmt;
+    const RelativeDateFormat* rdtfmt;
+    if ((sdtfmt = dynamic_cast<const SimpleDateFormat*>(reinterpret_cast<const DateFormat*>(fmt))) != NULL) {
+    	syms = sdtfmt->getDateFormatSymbols();
+    } else if ((rdtfmt = dynamic_cast<const RelativeDateFormat*>(reinterpret_cast<const DateFormat*>(fmt))) != NULL) {
+    	syms = rdtfmt->getDateFormatSymbols();
+    } else {
         return 0;
     }
-
-    const DateFormatSymbols *syms = 
-        ((SimpleDateFormat*)fmt)->getDateFormatSymbols();
     int32_t count = 0;
 
     switch(type) {
@@ -783,7 +835,7 @@ udat_setSymbols(    UDateFormat             *format,
             int32_t                 valueLength,
             UErrorCode              *status)
 {
-
+    verifyIsSimpleDateFormat(format, status);
     if(U_FAILURE(*status)) return;
 
     DateFormatSymbols *syms = (DateFormatSymbols *)((SimpleDateFormat *)format)->getDateFormatSymbols();
@@ -890,14 +942,36 @@ udat_getLocaleByType(const UDateFormat *fmt,
     return ((Format*)fmt)->getLocaleID(type, *status);
 }
 
+
+U_CAPI void U_EXPORT2
+udat_setContext(UDateFormat* fmt, UDisplayContext value, UErrorCode* status)
+{
+    verifyIsSimpleDateFormat(fmt, status);
+    if (U_FAILURE(*status)) {
+        return;
+    }
+    ((SimpleDateFormat*)fmt)->setContext(value, *status);
+}
+
+U_CAPI UDisplayContext U_EXPORT2
+udat_getContext(UDateFormat* fmt, UDisplayContextType type, UErrorCode* status)
+{
+    verifyIsSimpleDateFormat(fmt, status);
+    if (U_FAILURE(*status)) {
+        return (UDisplayContext)0;
+    }
+    return ((SimpleDateFormat*)fmt)->getContext(type, *status);
+}
+
+
 /**
  * Verify that fmt is a RelativeDateFormat. Invalid error if not.
  * @param fmt the UDateFormat, definitely a DateFormat, maybe something else
  * @param status error code, will be set to failure if there is a familure or the fmt is NULL.
  */
 static void verifyIsRelativeDateFormat(const UDateFormat* fmt, UErrorCode *status) {
-   if(!U_FAILURE(*status) && 
-       ((DateFormat*)fmt)->getDynamicClassID()!=RelativeDateFormat::getStaticClassID()) {
+   if(U_SUCCESS(*status) &&
+       dynamic_cast<const RelativeDateFormat*>(reinterpret_cast<const DateFormat*>(fmt))==NULL) {
        *status = U_ILLEGAL_ARGUMENT_ERROR;
    }
 }

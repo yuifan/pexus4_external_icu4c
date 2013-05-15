@@ -1,33 +1,31 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/zh_Hant_HK.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/zh_Hant_HK.xml
 // *
 // ***************************************************************************
 zh_Hant_HK{
-    NumberPatterns{
-        "#,##0.###",
-        "¤#,##0.00;(¤#,##0.00)",
-        "#,##0%",
-        "#E0",
+    NumberElements{
+        latn{
+            patterns{
+                currencyFormat{"¤#,##0.00;(¤#,##0.00)"}
+            }
+        }
     }
-    Version{"2.0.46.25"}
+    Version{"2.0.78.47"}
     calendar{
-        chinese{
+        buddhist{
             availableFormats{
-                yMEd{"y年M月d日，E"}
+                MEd{"M-d（E）"}
+                Md{"M-d"}
             }
         }
         gregorian{
-            DateTimeElements:intvector{
-                1,
-                4,
-            }
             DateTimePatterns{
-                "zzzzah時mm分ss秒",
-                "zah時mm分ss秒",
+                "ah:mm:ss [zzzz]",
+                "ah:mm:ss [z]",
                 "ahh:mm:ss",
                 "ah:mm",
                 "y年M月d日EEEE",
@@ -35,19 +33,56 @@ zh_Hant_HK{
                 "y年M月d日",
                 "yy年M月d日",
                 "{1}{0}",
+                "{1} {0}",
+                "{1} {0}",
                 "{1}{0}",
                 "{1}{0}",
-                "{1}{0}",
-                "{1}{0}",
+            }
+            availableFormats{
+                Ed{"d E"}
+                MEd{"E, M-d"}
+                Md{"M-d"}
+            }
+            fields{
+                month{
+                    relative{
+                        "-1"{"上月"}
+                        "1"{"下月"}
+                    }
+                }
+                year{
+                    relative{
+                        "-1"{"上年"}
+                        "0"{"本年"}
+                        "1"{"下年"}
+                    }
+                }
+            }
+        }
+        roc{
+            availableFormats{
+                MEd{"d-M（E）"}
+                Md{"d-M"}
             }
         }
     }
     measurementSystemNames{
+        UK{"英國"}
+        US{"美國"}
         metric{"十進制"}
     }
     units{
+        day-future{
+            other{"{0} 日後"}
+        }
+        day-past{
+            other{"{0} 日前"}
+        }
         hour{
             other{"{0}時"}
+        }
+        month-past{
+            other{"{0} 月前"}
         }
         week{
             other{"{0}星期"}

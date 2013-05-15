@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2002-2010, International Business Machines
+*   Copyright (C) 2002-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -35,7 +35,13 @@ enum {
     UPROPS_ADDITIONAL_VECTORS_INDEX,
     UPROPS_ADDITIONAL_VECTORS_COLUMNS_INDEX,
 
-    UPROPS_RESERVED_INDEX, /* 6 */
+    UPROPS_SCRIPT_EXTENSIONS_INDEX,
+
+    UPROPS_RESERVED_INDEX_7,
+    UPROPS_RESERVED_INDEX_8,
+
+    /* size of the data file (number of 32-bit units after the header) */
+    UPROPS_DATA_TOP_INDEX,
 
     /* maximum values for code values in vector word 0 */
     UPROPS_MAX_VALUES_INDEX=10,
@@ -59,13 +65,29 @@ enum {
 
 /* constants for the storage form of numeric types and values */
 enum {
+    /** No numeric value. */
     UPROPS_NTV_NONE=0,
+    /** Decimal digits: nv=0..9 */
     UPROPS_NTV_DECIMAL_START=1,
+    /** Other digits: nv=0..9 */
     UPROPS_NTV_DIGIT_START=11,
+    /** Small integers: nv=0..154 */
     UPROPS_NTV_NUMERIC_START=21,
+    /** Fractions: ((ntv>>4)-12) / ((ntv&0xf)+1) = -1..17 / 1..16 */
     UPROPS_NTV_FRACTION_START=0xb0,
+    /**
+     * Large integers:
+     * ((ntv>>5)-14) * 10^((ntv&0x1f)+2) = (1..9)*(10^2..10^33)
+     * (only one significant decimal digit)
+     */
     UPROPS_NTV_LARGE_START=0x1e0,
-    UPROPS_NTV_RESERVED_START=0x300,
+    /**
+     * Sexagesimal numbers:
+     * ((ntv>>2)-0xbf) * 60^((ntv&3)+1) = (1..9)*(60^1..60^4)
+     */
+    UPROPS_NTV_BASE60_START=0x300,
+    /** No numeric value (yet). */
+    UPROPS_NTV_RESERVED_START=UPROPS_NTV_BASE60_START+36,  /* 0x300+9*4=0x324 */
 
     UPROPS_NTV_MAX_SMALL_INT=UPROPS_NTV_FRACTION_START-UPROPS_NTV_NUMERIC_START-1
 };
@@ -83,15 +105,24 @@ enum {
  * Properties in vector word 0
  * Bits
  * 31..24   DerivedAge version major/minor one nibble each
- * 23..20   reserved
+ * 23..22   3..1: Bits 7..0 = Script_Extensions index
+ *             3: Script value from Script_Extensions
+ *             2: Script=Inherited
+ *             1: Script=Common
+ *             0: Script=bits 7..0
+ * 21..20   reserved
  * 19..17   East Asian Width
  * 16.. 8   UBlockCode
- *  7.. 0   UScriptCode
+ *  7.. 0   UScriptCode, or index to Script_Extensions
  */
 
 /* derived age: one nibble each for major and minor version numbers */
 #define UPROPS_AGE_MASK         0xff000000
 #define UPROPS_AGE_SHIFT        24
+
+/* Script_Extensions: mask includes Script */
+#define UPROPS_SCRIPT_X_MASK    0x00c000ff
+#define UPROPS_SCRIPT_X_SHIFT   22
 
 #define UPROPS_EA_MASK          0x000e0000
 #define UPROPS_EA_SHIFT         17
@@ -100,6 +131,11 @@ enum {
 #define UPROPS_BLOCK_SHIFT      8
 
 #define UPROPS_SCRIPT_MASK      0x000000ff
+
+/* UPROPS_SCRIPT_X_WITH_COMMON must be the lowest value that involves Script_Extensions. */
+#define UPROPS_SCRIPT_X_WITH_COMMON     0x400000
+#define UPROPS_SCRIPT_X_WITH_INHERITED  0x800000
+#define UPROPS_SCRIPT_X_WITH_OTHER      0xc00000
 
 /*
  * Properties in vector word 1
@@ -160,7 +196,6 @@ enum {
  */
 #define UPROPS_LB_MASK          0x03f00000
 #define UPROPS_LB_SHIFT         20
-#define UPROPS_LB_VWORD         2
 
 #define UPROPS_SB_MASK          0x000f8000
 #define UPROPS_SB_SHIFT         15
@@ -174,9 +209,15 @@ enum {
 #define UPROPS_DT_MASK          0x0000001f
 
 /**
+ * Gets the main properties value for a code point.
+ * Implemented in uchar.c for uprops.cpp.
+ */
+U_CFUNC uint32_t
+u_getMainProperties(UChar32 c);
+
+/**
  * Get a properties vector word for a code point.
- * Implemented in uchar.c for uprops.c.
- * column==-1 gets the 32-bit main properties word instead.
+ * Implemented in uchar.c for uprops.cpp.
  * @return 0 if no data or illegal argument
  */
 U_CFUNC uint32_t
@@ -322,8 +363,6 @@ enum UPropertySource {
     UPROPS_SRC_PROPSVEC,
     /** From unames.c/unames.icu */
     UPROPS_SRC_NAMES,
-    /** From unorm.cpp/unorm.icu */
-    UPROPS_SRC_NORM,
     /** From ucase.c/ucase.icu */
     UPROPS_SRC_CASE,
     /** From ubidi_props.c/ubidi.icu */
@@ -338,6 +377,8 @@ enum UPropertySource {
     UPROPS_SRC_NFKC,
     /** From normalizer2impl.cpp/nfkc_cf.nrm */
     UPROPS_SRC_NFKC_CF,
+    /** From normalizer2impl.cpp/nfc.nrm canonical iterator data */
+    UPROPS_SRC_NFC_CANON_ITER,
     /** One more than the highest UPropertySource (UPROPS_SRC_) constant. */
     UPROPS_SRC_COUNT
 };
@@ -379,15 +420,6 @@ uprv_getInclusions(const USetAdder *sa, UErrorCode *pErrorCode);
 */
 
 /**
- * Swap the ICU Unicode properties file. See uchar.c.
- * @internal
- */
-U_CAPI int32_t U_EXPORT2
-uprops_swap(const UDataSwapper *ds,
-            const void *inData, int32_t length, void *outData,
-            UErrorCode *pErrorCode);
-
-/**
  * Swap the ICU Unicode character names file. See uchar.c.
  * @internal
  */
@@ -396,7 +428,7 @@ uchar_swapNames(const UDataSwapper *ds,
                 const void *inData, int32_t length, void *outData,
                 UErrorCode *pErrorCode);
 
-#ifdef XP_CPLUSPLUS
+#ifdef __cplusplus
 
 U_NAMESPACE_BEGIN
 

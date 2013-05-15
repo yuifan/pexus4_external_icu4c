@@ -22,7 +22,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 src_files := \
-	bocsu.c     ucln_in.c  decContext.c \
+	ucln_in.c  decContext.c \
 	ulocdata.c  utmscale.c decNumber.c
 
 src_files += \
@@ -40,7 +40,8 @@ src_files += \
 	datefmt.cpp     dcfmtsym.cpp decimfmt.cpp \
 	digitlst.cpp    dtfmtsym.cpp esctrn.cpp   \
 	fmtable_cnv.cpp fmtable.cpp  format.cpp   \
-	funcrepl.cpp    gregocal.cpp gregoimp.cpp \
+	funcrepl.cpp    gender.cpp \
+	gregocal.cpp gregoimp.cpp \
 	hebrwcal.cpp    inputext.cpp islamcal.cpp \
 	japancal.cpp    measfmt.cpp  measure.cpp  \
 	msgfmt.cpp      name2uni.cpp nfrs.cpp     \
@@ -49,6 +50,7 @@ src_files += \
 	quant.cpp       rbnf.cpp     rbt.cpp      \
 	rbt_data.cpp    rbt_pars.cpp rbt_rule.cpp \
 	rbt_set.cpp     regexcmp.cpp regexst.cpp  \
+	regeximp.cpp \
 	rematch.cpp     remtrans.cpp repattrn.cpp \
 	search.cpp      simpletz.cpp smpdtfmt.cpp \
 	sortkey.cpp     strmatch.cpp strrepl.cpp  \
@@ -62,24 +64,31 @@ src_files += \
 	umsg.cpp        unesctrn.cpp uni2name.cpp \
 	unum.cpp        uregexc.cpp  uregex.cpp   \
 	usearch.cpp     utrans.cpp   windtfmt.cpp \
- 	winnmfmt.cpp    zonemeta.cpp zstrfmt.cpp  \
- 	numsys.cpp      chnsecal.cpp \
- 	cecal.cpp       coptccal.cpp ethpccal.cpp \
- 	brktrans.cpp    wintzimpl.cpp plurrule.cpp \
- 	plurfmt.cpp     dtitvfmt.cpp dtitvinf.cpp \
- 	tmunit.cpp      tmutamt.cpp  tmutfmt.cpp  \
- 	colldata.cpp    bmsearch.cpp bms.cpp      \
+	winnmfmt.cpp    zonemeta.cpp \
+	numsys.cpp      chnsecal.cpp \
+	cecal.cpp       coptccal.cpp ethpccal.cpp \
+	brktrans.cpp    wintzimpl.cpp plurrule.cpp \
+	plurfmt.cpp     dtitvfmt.cpp dtitvinf.cpp \
+	tmunit.cpp      tmutamt.cpp  tmutfmt.cpp  \
+	colldata.cpp    bmsearch.cpp bms.cpp      \
         currpinf.cpp    uspoof.cpp   uspoof_impl.cpp \
         uspoof_build.cpp     \
         regextxt.cpp    selfmt.cpp   uspoof_conf.cpp \
         uspoof_wsconf.cpp ztrans.cpp zrule.cpp  \
         vzone.cpp       fphdlimp.cpp fpositer.cpp\
-        locdspnm.cpp    decnumstr.cpp ucol_wgt.cpp
+        locdspnm.cpp    ucol_wgt.cpp \
+        alphaindex.cpp  bocsu.cpp    decfmtst.cpp \
+        smpdtfst.cpp    smpdtfst.h   tzfmt.cpp \
+        tzgnames.cpp    tznames.cpp  tznames_impl.cpp \
+        udateintervalformat.cpp  upluralrules.cpp
 
 
 c_includes = \
 	$(LOCAL_PATH) \
 	$(LOCAL_PATH)/../common
+
+local_cflags := -D_REENTRANT -DU_I18N_IMPLEMENTATION -O3 -fvisibility=hidden
+local_ldlibs := -lpthread -lm
 
 
 #
@@ -87,18 +96,18 @@ c_includes = \
 #
 
 include $(CLEAR_VARS)
-
 LOCAL_SRC_FILES := $(src_files)
-LOCAL_C_INCLUDES := $(c_includes)
-
-LOCAL_CFLAGS += -D_REENTRANT -DPIC -DU_I18N_IMPLEMENTATION -fPIC 
-LOCAL_CFLAGS += -O3
-
-LOCAL_SHARED_LIBRARIES += libicuuc
-LOCAL_LDLIBS += -lpthread -lm
+LOCAL_C_INCLUDES += $(c_includes) \
+                    abi/cpp/include \
+                    bionic \
+                    bionic/libstdc++/include \
+                    external/stlport/stlport
+LOCAL_CFLAGS += $(local_cflags) -DPIC -fPIC
+LOCAL_RTTI_FLAG := -frtti
+LOCAL_SHARED_LIBRARIES += libicuuc libgabi++ libstlport
+LOCAL_LDLIBS += $(local_ldlibs)
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libicui18n
-
 include $(BUILD_SHARED_LIBRARY)
 
 
@@ -107,19 +116,13 @@ include $(BUILD_SHARED_LIBRARY)
 #
 
 ifeq ($(WITH_HOST_DALVIK),true)
-
     include $(CLEAR_VARS)
-
     LOCAL_SRC_FILES := $(src_files)
     LOCAL_C_INCLUDES := $(c_includes)
-
-    LOCAL_CFLAGS += -D_REENTRANT -DU_I18N_IMPLEMENTATION
-
-    LOCAL_SHARED_LIBRARIES += libicuuc
-    LOCAL_LDLIBS += -lpthread -lm
+    LOCAL_CFLAGS += $(local_cflags)
+    LOCAL_SHARED_LIBRARIES += libicuuc-host
+    LOCAL_LDLIBS += $(local_ldlibs)
     LOCAL_MODULE_TAGS := optional
-    LOCAL_MODULE := libicui18n
-
+    LOCAL_MODULE := libicui18n-host
     include $(BUILD_HOST_SHARED_LIBRARY)
-
 endif

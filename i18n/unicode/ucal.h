@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (C) 1996-2010, International Business Machines Corporation and
+ * Copyright (C) 1996-2012, International Business Machines Corporation and
  * others. All Rights Reserved.
  *******************************************************************************
  */
@@ -122,7 +122,7 @@
  * <p>
  * The date or time format strings are not part of the definition of a
  * calendar, as those must be modifiable or overridable by the user at
- * runtime. Use {@link DateFormat}
+ * runtime. Use {@link icu::DateFormat}
  * to format dates.
  *
  * <p>
@@ -139,6 +139,12 @@
  *
  * @stable ICU 2.0
  */
+
+/**
+ * The time zone ID reserved for unknown time zone.
+ * @stable ICU 4.8
+ */
+#define UCAL_UNKNOWN_ZONE_ID "Etc/Unknown"
 
 /** A calendar.
  *  For usage in C programs.
@@ -158,7 +164,7 @@ enum UCalendarType {
   UCAL_TRADITIONAL,
   /**
    * A better name for UCAL_TRADITIONAL.
-   * @draft ICU 4.2
+   * @stable ICU 4.2
    */
   UCAL_DEFAULT = UCAL_TRADITIONAL,
   /**
@@ -516,6 +522,53 @@ enum UCalendarAMPMs {
 typedef enum UCalendarAMPMs UCalendarAMPMs;
 
 /**
+ * System time zone type constants used by filtering zones
+ * in ucal_openTimeZoneIDEnumeration.
+ * @see ucal_openTimeZoneIDEnumeration
+ * @stable ICU 4.8
+ */
+enum USystemTimeZoneType {
+    /**
+     * Any system zones.
+     * @stable ICU 4.8
+     */
+    UCAL_ZONE_TYPE_ANY,
+    /**
+     * Canonical system zones.
+     * @stable ICU 4.8
+     */
+    UCAL_ZONE_TYPE_CANONICAL,
+    /**
+     * Canonical system zones associated with actual locations.
+     * @stable ICU 4.8
+     */
+    UCAL_ZONE_TYPE_CANONICAL_LOCATION
+};
+
+/** @stable ICU 4.8 */
+typedef enum USystemTimeZoneType USystemTimeZoneType;
+
+/** 
+ * Create an enumeration over system time zone IDs with the given
+ * filter conditions. 
+ * @param zoneType  The system time zone type.
+ * @param region    The ISO 3166 two-letter country code or UN M.49
+ *                  three-digit area code.  When NULL, no filtering
+ *                  done by region. 
+ * @param rawOffset An offset from GMT in milliseconds, ignoring the
+ *                  effect of daylight savings time, if any. When NULL,
+ *                  no filtering done by zone offset.
+ * @param ec        A pointer to an UErrorCode to receive any errors
+ * @return  an enumeration object that the caller must dispose of
+ *          using enum_close(), or NULL upon failure. In case of failure,
+ *          *ec will indicate the error.
+ * @stable ICU 4.8
+ */ 
+U_STABLE UEnumeration* U_EXPORT2
+ucal_openTimeZoneIDEnumeration(USystemTimeZoneType zoneType, const char* region,
+                                const int32_t* rawOffset, UErrorCode* ec);
+
+/**
  * Create an enumeration over all time zones.
  *
  * @param ec input/output error code
@@ -612,10 +665,10 @@ ucal_getNow(void);
  * A UCalendar may be used to convert a millisecond value to a year,
  * month, and day.
  * <p>
- * Note: When unknown TimeZone ID is specified, the UCalendar returned
- * by the function is initialized with GMT ("Etc/GMT") without any
- * errors/warnings.  If you want to check if a TimeZone ID is valid,
- * use ucal_getCanonicalTimeZoneID prior to this function.
+ * Note: When unknown TimeZone ID is specified or if the TimeZone ID specified is "Etc/Unknown",
+ * the UCalendar returned by the function is initialized with GMT zone with TimeZone ID
+ * <code>UCAL_UNKNOWN_ZONE_ID</code> ("Etc/Unknown") without any errors/warnings.  If you want
+ * to check if a TimeZone ID is valid prior to this function, use <code>ucal_getCanonicalTimeZoneID</code>.
  * 
  * @param zoneID The desired TimeZone ID.  If 0, use the default time zone.
  * @param len The length of zoneID, or -1 if null-terminated.
@@ -627,6 +680,7 @@ ucal_getNow(void);
  * and then pass the locale to ucal_open with UCAL_DEFAULT as the type.
  * @param status A pointer to an UErrorCode to receive any errors
  * @return A pointer to a UCalendar, or 0 if an error occurred.
+ * @see #UCAL_UNKNOWN_ZONE_ID
  * @stable ICU 2.0
  */
 U_STABLE UCalendar* U_EXPORT2 
@@ -656,7 +710,7 @@ U_NAMESPACE_BEGIN
  *
  * @see LocalPointerBase
  * @see LocalPointer
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
 U_DEFINE_LOCAL_OPEN_POINTER(LocalUCalendarPointer, UCalendar, ucal_close);
 
@@ -793,16 +847,73 @@ ucal_getGregorianChange(const UCalendar *cal, UErrorCode *pErrorCode);
  * @stable ICU 2.0
  */
 enum UCalendarAttribute {
-    /** Lenient parsing */
+  /**
+   * Lenient parsing
+   * @stable ICU 2.0
+   */
   UCAL_LENIENT,
-  /** First day of week */
+  /**
+   * First day of week
+   * @stable ICU 2.0
+   */
   UCAL_FIRST_DAY_OF_WEEK,
-  /** Minimum number of days in first week */
+  /**
+   * Minimum number of days in first week
+   * @stable ICU 2.0
+   */
   UCAL_MINIMAL_DAYS_IN_FIRST_WEEK
+#ifndef U_HIDE_DRAFT_API
+  ,
+  /**
+   * The behavior for handling wall time repeating multiple times
+   * at negative time zone offset transitions
+   * @draft ICU 49
+   */
+  UCAL_REPEATED_WALL_TIME,
+  /**
+   * The behavior for handling skipped wall time at positive time
+   * zone offset transitions.
+   * @draft ICU 49
+   */
+  UCAL_SKIPPED_WALL_TIME
+#endif  /* U_HIDE_DRAFT_API */
 };
 
 /** @stable ICU 2.0 */
 typedef enum UCalendarAttribute UCalendarAttribute;
+
+/**
+ * Options for handling ambiguous wall time at time zone
+ * offset transitions.
+ * @draft ICU 49
+ */
+enum UCalendarWallTimeOption {
+    /**
+     * An ambiguous wall time to be interpreted as the latest.
+     * This option is valid for UCAL_REPEATED_WALL_TIME and
+     * UCAL_SKIPPED_WALL_TIME.
+     * @draft ICU 49
+     */
+    UCAL_WALLTIME_LAST
+#ifndef U_HIDE_DRAFT_API
+    ,
+    /**
+     * An ambiguous wall time to be interpreted as the earliest.
+     * This option is valid for UCAL_REPEATED_WALL_TIME and
+     * UCAL_SKIPPED_WALL_TIME.
+     * @draft ICU 49
+     */
+    UCAL_WALLTIME_FIRST,
+    /**
+     * An ambiguous wall time to be interpreted as the next valid
+     * wall time. This option is valid for UCAL_SKIPPED_WALL_TIME.
+     * @draft ICU 49
+     */
+    UCAL_WALLTIME_NEXT_VALID
+#endif  /* U_HIDE_DRAFT_API */
+};
+/** @draft ICU 49 */
+typedef enum UCalendarWallTimeOption UCalendarWallTimeOption;
 
 /**
  * Get a numeric attribute associated with a UCalendar.
@@ -810,7 +921,7 @@ typedef enum UCalendarAttribute UCalendarAttribute;
  * of days in the first week of the month.
  * @param cal The UCalendar to query.
  * @param attr The desired attribute; one of UCAL_LENIENT, UCAL_FIRST_DAY_OF_WEEK,
- * or UCAL_MINIMAL_DAYS_IN_FIRST_WEEK
+ * UCAL_MINIMAL_DAYS_IN_FIRST_WEEK, UCAL_REPEATED_WALL_TIME or UCAL_SKIPPED_WALL_TIME
  * @return The value of attr.
  * @see ucal_setAttribute
  * @stable ICU 2.0
@@ -825,7 +936,7 @@ ucal_getAttribute(const UCalendar*    cal,
  * of days in the first week of the month.
  * @param cal The UCalendar to set.
  * @param attr The desired attribute; one of UCAL_LENIENT, UCAL_FIRST_DAY_OF_WEEK,
- * or UCAL_MINIMAL_DAYS_IN_FIRST_WEEK
+ * UCAL_MINIMAL_DAYS_IN_FIRST_WEEK, UCAL_REPEATED_WALL_TIME or UCAL_SKIPPED_WALL_TIME
  * @param newValue The new value of attr.
  * @see ucal_getAttribute
  * @stable ICU 2.0
@@ -953,6 +1064,9 @@ ucal_equivalentTo(const UCalendar*  cal1,
 /**
  * Add a specified signed amount to a particular field in a UCalendar.
  * This can modify more significant fields in the calendar.
+ * Adding a positive value always means moving forward in time, so for the Gregorian calendar,
+ * starting with 100 BC and adding +1 to year results in 99 BC (even though this actually reduces
+ * the numeric value of the field itself).
  * @param cal The UCalendar to which to add.
  * @param field The field to which to add the signed value; one of UCAL_ERA, UCAL_YEAR, UCAL_MONTH,
  * UCAL_WEEK_OF_YEAR, UCAL_WEEK_OF_MONTH, UCAL_DATE, UCAL_DAY_OF_YEAR, UCAL_DAY_OF_WEEK,
@@ -974,6 +1088,15 @@ ucal_add(UCalendar*           cal,
 /**
  * Add a specified signed amount to a particular field in a UCalendar.
  * This will not modify more significant fields in the calendar.
+ * Rolling by a positive value always means moving forward in time (unless the limit of the
+ * field is reached, in which case it may pin or wrap), so for Gregorian calendar,
+ * starting with 100 BC and rolling the year by +1 results in 99 BC.
+ * When eras have a definite beginning and end (as in the Chinese calendar, or as in most eras in the
+ * Japanese calendar) then rolling the year past either limit of the era will cause the year to wrap around.
+ * When eras only have a limit at one end, then attempting to roll the year past that limit will result in
+ * pinning the year at that limit. Note that for most calendars in which era 0 years move forward in time
+ * (such as Buddhist, Hebrew, or Islamic), it is possible for add or roll to result in negative years for
+ * era 0 (that is the only way to represent years before the calendar epoch).
  * @param cal The UCalendar to which to add.
  * @param field The field to which to add the signed value; one of UCAL_ERA, UCAL_YEAR, UCAL_MONTH,
  * UCAL_WEEK_OF_YEAR, UCAL_WEEK_OF_MONTH, UCAL_DATE, UCAL_DAY_OF_YEAR, UCAL_DAY_OF_WEEK,
@@ -1199,30 +1322,34 @@ ucal_getKeywordValuesForLocale(const char* key,
 
 
 /** Weekday types, as returned by ucal_getDayOfWeekType().
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
 enum UCalendarWeekdayType {
   /**
    * Designates a full weekday (no part of the day is included in the weekend).
+   * @stable ICU 4.4 
    */
   UCAL_WEEKDAY,
   /**
    * Designates a full weekend day (the entire day is included in the weekend).
+   * @stable ICU 4.4 
    */
   UCAL_WEEKEND,
   /**
    * Designates a day that starts as a weekday and transitions to the weekend.
    * Call ucal_getWeekendTransition() to get the time of transition.
+   * @stable ICU 4.4 
    */
   UCAL_WEEKEND_ONSET,
   /**
    * Designates a day that starts as the weekend and transitions to a weekday.
    * Call ucal_getWeekendTransition() to get the time of transition.
+   * @stable ICU 4.4 
    */
   UCAL_WEEKEND_CEASE
 };
 
-/** @draft ICU 4.4 */
+/** @stable ICU 4.4 */
 typedef enum UCalendarWeekdayType UCalendarWeekdayType;
 
 /**
@@ -1239,9 +1366,9 @@ typedef enum UCalendarWeekdayType UCalendarWeekdayType;
  * @param dayOfWeek The day of the week whose type is desired (UCAL_SUNDAY..UCAL_SATURDAY).
  * @param status The error code for the operation.
  * @return The UCalendarWeekdayType for the day of the week.
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
-U_DRAFT UCalendarWeekdayType U_EXPORT2
+U_STABLE UCalendarWeekdayType U_EXPORT2
 ucal_getDayOfWeekType(const UCalendar *cal, UCalendarDaysOfWeek dayOfWeek, UErrorCode* status);
 
 /**
@@ -1257,9 +1384,9 @@ ucal_getDayOfWeekType(const UCalendar *cal, UCalendarDaysOfWeek dayOfWeek, UErro
  * desired (UCAL_SUNDAY..UCAL_SATURDAY).
  * @param status The error code for the operation.
  * @return The milliseconds after midnight at which the weekend begins or ends.
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
-U_DRAFT int32_t U_EXPORT2
+U_STABLE int32_t U_EXPORT2
 ucal_getWeekendTransition(const UCalendar *cal, UCalendarDaysOfWeek dayOfWeek, UErrorCode *status);
 
 /**
@@ -1270,11 +1397,96 @@ ucal_getWeekendTransition(const UCalendar *cal, UCalendarDaysOfWeek dayOfWeek, U
  * @param status The error code for the operation.
  * @return TRUE if the given UDate is in the weekend in
  * this calendar system, FALSE otherwise.
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
-U_DRAFT UBool U_EXPORT2
+U_STABLE UBool U_EXPORT2
 ucal_isWeekend(const UCalendar *cal, UDate date, UErrorCode *status);
 
+/**
+ * Return the difference between the target time and the time this calendar object is currently set to.
+ * If the target time is after the current calendar setting, the the returned value will be positive.
+ * The field parameter specifies the units of the return value. For example, if field is UCAL_MONTH
+ * and ucal_getFieldDifference returns 3, then the target time is 3 to less than 4 months after the
+ * current calendar setting.
+ *
+ * As a side effect of this call, this calendar is advanced toward target by the given amount. That is,
+ * calling this function has the side effect of calling ucal_add on this calendar with the specified
+ * field and an amount equal to the return value from this function.
+ *
+ * A typical way of using this function is to call it first with the largest field of interest, then
+ * with progressively smaller fields.
+ * 
+ * @param cal The UCalendar to compare and update.
+ * @param target The target date to compare to the current calendar setting.
+ * @param field The field to compare; one of UCAL_ERA, UCAL_YEAR, UCAL_MONTH,
+ * UCAL_WEEK_OF_YEAR, UCAL_WEEK_OF_MONTH, UCAL_DATE, UCAL_DAY_OF_YEAR, UCAL_DAY_OF_WEEK,
+ * UCAL_DAY_OF_WEEK_IN_MONTH, UCAL_AM_PM, UCAL_HOUR, UCAL_HOUR_OF_DAY, UCAL_MINUTE, UCAL_SECOND,
+ * UCAL_MILLISECOND, UCAL_ZONE_OFFSET, UCAL_DST_OFFSET.
+ * @param status A pointer to an UErrorCode to receive any errors
+ * @return The date difference for the specified field.
+ * @stable ICU 4.8
+ */
+U_STABLE int32_t U_EXPORT2 
+ucal_getFieldDifference(UCalendar* cal,
+                        UDate target,
+                        UCalendarDateFields field,
+                        UErrorCode* status);
+
+#ifndef U_HIDE_DRAFT_API
+/**
+ * Time zone transition types for ucal_getTimeZoneTransitionDate
+ * @draft ICU 50
+ */
+enum UTimeZoneTransitionType {
+    /**
+     * Get the next transition after the current date,
+     * i.e. excludes the current date
+     * @draft ICU 50
+     */
+    UCAL_TZ_TRANSITION_NEXT,
+    /**
+     * Get the next transition on or after the current date,
+     * i.e. may include the current date
+     * @draft ICU 50
+     */
+    UCAL_TZ_TRANSITION_NEXT_INCLUSIVE,
+    /**
+     * Get the previous transition before the current date,
+     * i.e. excludes the current date
+     * @draft ICU 50
+     */
+    UCAL_TZ_TRANSITION_PREVIOUS,
+    /**
+     * Get the previous transition on or before the current date,
+     * i.e. may include the current date
+     * @draft ICU 50
+     */
+    UCAL_TZ_TRANSITION_PREVIOUS_INCLUSIVE
+};
+
+/** @draft ICU 50 */
+typedef enum UTimeZoneTransitionType UTimeZoneTransitionType;
+
+/**
+* Get the UDate for the next/previous time zone transition relative to
+* the calendar's current date, in the time zone to which the calendar
+* is currently set. If there is no known time zone transition of the
+* requested type relative to the calendar's date, the function returns
+* FALSE.
+* @param cal The UCalendar to query.
+* @param type The type of transition desired.
+* @param transition A pointer to a UDate to be set to the transition time.
+*         If the function returns FALSE, the value set is unspecified.
+* @param status A pointer to a UErrorCode to receive any errors.
+* @return TRUE if a valid transition time is set in *transition, FALSE
+*         otherwise.
+* @draft ICU 50
+*/
+U_DRAFT UBool U_EXPORT2 
+ucal_getTimeZoneTransitionDate(const UCalendar* cal, UTimeZoneTransitionType type,
+                               UDate* transition, UErrorCode* status);
+
+#endif  /* U_HIDE_DRAFT_API */
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
 

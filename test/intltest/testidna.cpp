@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- *   Copyright (C) 2003-2009, International Business Machines
+ *   Copyright (C) 2003-2012, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include "unicode/localpointer.h"
 #include "unicode/ustring.h"
 #include "unicode/usprep.h"
 #include "unicode/uniset.h"
@@ -1235,6 +1236,8 @@ void TestIDNA::testRootLabelSeparator(const char* testName, CompareFunc func,
 // runIndexedTest
 //---------------------------------------------
 
+extern IntlTest *createUTS46Test();
+
 void TestIDNA::runIndexedTest( int32_t index, UBool exec, const char* &name, char* par)
 {
     if (exec) logln((UnicodeString)"TestSuite IDNA API ");
@@ -1266,6 +1269,14 @@ void TestIDNA::runIndexedTest( int32_t index, UBool exec, const char* &name, cha
                 }
                 break;
             }
+        case 13:
+            name = "UTS46Test";
+            if (exec) {
+                logln("TestSuite UTS46Test---"); logln();
+                LocalPointer<IntlTest> test(createUTS46Test());
+                callTest(*test, par);
+            }
+            break;
         default: name = ""; break; /*needed to end loop*/
     }
 }
@@ -1509,23 +1520,33 @@ void TestIDNA::TestIDNAMonkeyTest(){
 }
 
 void TestIDNA::TestCompareReferenceImpl(){
-    
+
     UChar src [2] = {0,0};
     int32_t srcLen = 0;
-    
 
-    for(int32_t i = 0x40000 ; i< 0x10ffff; i++){
-        if(quick==TRUE && i> 0x1FFFF){
+    // data even OK?
+    {
+      UErrorCode dataStatus = U_ZERO_ERROR;
+      loadTestData(dataStatus);
+      if(U_FAILURE(dataStatus)) {
+        dataerrln("Couldn't load test data: %s\n", u_errorName(dataStatus)); // save us from thousands and thousands of errors
+        return;
+      }
+    }
+
+    for (int32_t i = 0; i <= 0x10FFFF; i++){
+        if (quick == TRUE && i > 0x0FFF){
             return;
         }
-        if(i >= 0x30000 && i <= 0xF0000){
-           i+=0xB0000;
+        if(i == 0x30000){
+            // jump to E0000, no characters assigned in plain 3 to plain 13 as of Unicode 6.0
+            i = 0xE0000;
         }
-        if(i>0xFFFF){
-           src[0] = U16_LEAD(i);
-           src[1] = U16_TRAIL(i);
-           srcLen =2;
-        }else{
+        if (i > 0xFFFF){
+            src[0] = U16_LEAD(i);
+            src[1] = U16_TRAIL(i);
+            srcLen =2;
+        } else {
             src[0] = (UChar)i;
             src[1] = 0;
             srcLen = 1;

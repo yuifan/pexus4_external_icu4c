@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1999-2008, International Business Machines
+*   Copyright (C) 1999-2011, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
@@ -211,7 +211,7 @@ public:
 // UVector32 inlines
 
 inline UBool UVector32::ensureCapacity(int32_t minimumCapacity, UErrorCode &status) {
-    if (capacity >= minimumCapacity) {
+    if ((minimumCapacity >= 0) && (capacity >= minimumCapacity)) {
         return TRUE;
     } else {
         return expandCapacity(minimumCapacity, status);
@@ -219,7 +219,7 @@ inline UBool UVector32::ensureCapacity(int32_t minimumCapacity, UErrorCode &stat
 }
 
 inline int32_t UVector32::elementAti(int32_t index) const {
-    return (0 <= index && index < count) ? elements[index] : 0;
+    return (index >= 0 && count > 0 && count - index > 0) ? elements[index] : 0;
 }
 
 

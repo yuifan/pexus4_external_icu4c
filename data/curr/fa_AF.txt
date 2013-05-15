@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/fa_AF.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/fa_AF.xml
 // *
 // ***************************************************************************
 fa_AF{
@@ -13,11 +13,11 @@ fa_AF{
             "افغانی افغانستان",
         }
         AUD{
-            "AU$",
+            "A$",
             "دالر آسترالیا",
         }
         BND{
-            "BN$",
+            "BND",
             "دالر برونی",
         }
         BYR{
@@ -33,7 +33,7 @@ fa_AF{
             "فرانک سویس",
         }
         DKK{
-            "Dkr",
+            "DKK",
             "کرون دنمارک",
         }
         JPY{
@@ -45,19 +45,19 @@ fa_AF{
             "پزوی مکسیکو",
         }
         NLG{
-            "fl",
+            "NLG",
             "گیلدر هالند",
         }
         NOK{
-            "Nkr",
+            "NOK",
             "کرون ناروی",
         }
         SEK{
-            "Skr",
+            "SEK",
             "کرون سویدن",
         }
         SGD{
-            "S$",
+            "SGD",
             "دالر سینگاپور",
         }
         TJS{
@@ -69,5 +69,5 @@ fa_AF{
             "دالر امریکا",
         }
     }
-    Version{"2.0.47.53"}
+    Version{"2.0.77.46"}
 }

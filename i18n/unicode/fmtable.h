@@ -1,6 +1,6 @@
 /*
 ********************************************************************************
-*   Copyright (C) 1997-2010, International Business Machines
+*   Copyright (C) 1997-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -28,8 +28,18 @@
 
 U_NAMESPACE_BEGIN
 
-class   DecimalNumberString;
-class   DigitList;
+class CharString;
+class DigitList;
+
+/**
+ * \def UNUM_INTERNAL_STACKARRAY_SIZE
+ * @internal
+ */
+#if U_PLATFORM == U_PF_OS400
+#define UNUM_INTERNAL_STACKARRAY_SIZE 144
+#else
+#define UNUM_INTERNAL_STACKARRAY_SIZE 128
+#endif
 
 /**
  * Formattable objects can be passed to the Format class or
@@ -118,7 +128,7 @@ public:
      * @param status  the error code.  Possible errors include U_INVALID_FORMAT_ERROR
      *                if the format of the string does not conform to that of a
      *                decimal number.
-     * @draft ICU 4.4
+     * @stable ICU 4.4
      */
     Formattable(const StringPiece &number, UErrorCode &status);
 
@@ -476,7 +486,7 @@ public:
      *
      * @param status the error code.
      * @return the unformatted string representation of a number.
-     * @draft ICU 4.4
+     * @stable ICU 4.4
      */
     StringPiece getDecimalNumber(UErrorCode &status);
 
@@ -565,7 +575,7 @@ public:
      * @param numberString  a string representation of the unformatted decimal number.
      * @param status        the error code.  Set to U_INVALID_FORMAT_ERROR if the
      *                      incoming string is not a valid decimal number.
-     * @draft ICU 4.4
+     * @stable ICU 4.4
      */
     void             setDecimalNumber(const StringPiece &numberString,
                                       UErrorCode &status);
@@ -584,6 +594,7 @@ public:
      */
     static UClassID U_EXPORT2 getStaticClassID();
 
+#ifndef U_HIDE_DEPRECATED_API
     /**
      * Deprecated variant of getLong(UErrorCode&).
      * @param status the error code
@@ -591,7 +602,9 @@ public:
      * @deprecated ICU 3.0 use getLong(UErrorCode&) instead
      */ 
     inline int32_t getLong(UErrorCode* status) const;
+#endif  /* U_HIDE_DEPRECATED_API */
 
+#ifndef U_HIDE_INTERNAL_API
     /**
      * Internal function, do not use.
      * TODO:  figure out how to make this be non-public.
@@ -600,16 +613,21 @@ public:
      *        big decimal formatting.
      *  @internal
      */
-    DigitList *getDigitList() const { return fDecimalNum;};
+    DigitList *getDigitList() const { return fDecimalNum;}
+
+    /**
+     *  @internal
+     */
+    DigitList *getInternalDigitList();
 
     /**
      *  Adopt, and set value from, a DigitList
      *     Internal Function, do not use.
      *  @param dl the Digit List to be adopted
-     *  @param status reports errors
      *  @internal
      */
     void adoptDigitList(DigitList *dl);
+#endif  /* U_HIDE_INTERNAL_API */
 
 private:
     /**
@@ -617,7 +635,7 @@ private:
      * string or array objects.
      */
     void            dispose(void);
-    
+
     /**
      * Common initialization, for use by constructors.
      */
@@ -637,8 +655,11 @@ private:
         }               fArrayAndCount;
     } fValue;
 
-    DecimalNumberString  *fDecimalStr;
+    CharString           *fDecimalStr;
+
     DigitList            *fDecimalNum;
+
+    char                fStackData[UNUM_INTERNAL_STACKARRAY_SIZE]; // must be big enough for DigitList
 
     Type                fType;
     UnicodeString       fBogus; // Bogus string when it's needed.
@@ -662,9 +683,12 @@ inline UnicodeString& Formattable::getString(void) {
     return *fValue.fString;
 }
 
+#ifndef U_HIDE_DEPRECATED_API
 inline int32_t Formattable::getLong(UErrorCode* status) const {
     return getLong(*status);
 }
+#endif
+
 
 U_NAMESPACE_END
 
@@ -672,4 +696,3 @@ U_NAMESPACE_END
 
 #endif //_FMTABLE
 //eof
-

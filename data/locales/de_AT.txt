@@ -1,19 +1,20 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/de_AT.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/de_AT.xml
 // *
 // ***************************************************************************
 de_AT{
-    NumberPatterns{
-        "#,##0.###",
-        "¤ #,##0.00",
-        "#,##0 %",
-        "#E0",
+    NumberElements{
+        latn{
+            patterns{
+                currencyFormat{"¤ #,##0.00"}
+            }
+        }
     }
-    Version{"2.0.45.82"}
+    Version{"2.0.65.46"}
     calendar{
         gregorian{
             DateTimePatterns{
@@ -35,17 +36,17 @@ de_AT{
                 format{
                     abbreviated{
                         "Jän",
-                        "Feb",
-                        "Mär",
-                        "Apr",
+                        "Feb.",
+                        "Mär.",
+                        "Apr.",
                         "Mai",
-                        "Jun",
-                        "Jul",
-                        "Aug",
-                        "Sep",
-                        "Okt",
-                        "Nov",
-                        "Dez",
+                        "Juni",
+                        "Juli",
+                        "Aug.",
+                        "Sep.",
+                        "Okt.",
+                        "Nov.",
+                        "Dez.",
                     }
                     wide{
                         "Jänner",
@@ -60,6 +61,22 @@ de_AT{
                         "Oktober",
                         "November",
                         "Dezember",
+                    }
+                }
+                stand-alone{
+                    abbreviated{
+                        "Jän",
+                        "Feb",
+                        "Mär",
+                        "Apr",
+                        "Mai",
+                        "Jun",
+                        "Jul",
+                        "Aug",
+                        "Sep",
+                        "Okt",
+                        "Nov",
+                        "Dez",
                     }
                 }
             }

@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1998-2010, International Business Machines Corporation and
+ * Copyright (c) 1998-2012, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*
@@ -22,6 +22,26 @@
 #include "cstring.h"
 #include "putilimp.h"
 #include "toolutil.h"
+#include "uinvchar.h"
+#include <stdio.h>
+
+/* See the comments on U_SIGNED_RIGHT_SHIFT_IS_ARITHMETIC. */
+static void TestSignedRightShiftIsArithmetic(void) {
+    int32_t x=0xfff5fff3;
+    int32_t m=-1;
+    int32_t x4=x>>4;
+    int32_t m1=m>>1;
+    UBool signedRightShiftIsArithmetic= x4==0xffff5fff && m1==-1;
+    if(signedRightShiftIsArithmetic==U_SIGNED_RIGHT_SHIFT_IS_ARITHMETIC) {
+        log_info("signed right shift is Arithmetic Shift Right: %d\n",
+                 signedRightShiftIsArithmetic);
+    } else {
+        log_err("error: unexpected signed right shift is Arithmetic Shift Right: %d\n"
+                "       You need to change the value of U_SIGNED_RIGHT_SHIFT_IS_ARITHMETIC "
+                "for your platform.\n",
+                signedRightShiftIsArithmetic);
+    }
+}
 
 static UBool compareWithNAN(double x, double y);
 static void doAssert(double expect, double got, const char *message);
@@ -41,7 +61,7 @@ static void TestPUtilAPI(void){
         log_err("Error in uprv_modf.  Expected IntegralValue=%f, Got=%f, \n Expected FractionalValue=%f, Got=%f\n",
              expn1, n1, expy1, y1);
     }
-    if(VERBOSITY){
+    if(getTestOption(VERBOSITY_OPTION)){
         log_verbose("[float]  x = %f  n = %f y = %f\n", value1, n1, y1);
     }
     log_verbose("Testing the API uprv_fmod()\n");
@@ -175,21 +195,20 @@ static void TestPUtilAPI(void){
             log_verbose("***** WARNING: If testing in the PST timezone, t_timezone should return 28800! *****");
         }
         if ((tzoffset % 1800 != 0)) {
-            log_err("FAIL: t_timezone may be incorrect. It is not a multiple of 30min.");
+            log_info("Note: t_timezone offset of %ld (for %s : %s) is not a multiple of 30min.", tzoffset, uprv_tzname(0), uprv_tzname(1));
         }
         /*tzoffset=uprv_getUTCtime();*/
 
     }
 }
 
-static void TestVersion()
+static void TestVersion(void)
 {
     UVersionInfo versionArray = {0x01, 0x00, 0x02, 0x02};
     UVersionInfo versionArray2 = {0x01, 0x00, 0x02, 0x02};
     char versionString[17]; /* xxx.xxx.xxx.xxx\0 */
     UChar versionUString[] = { 0x0031, 0x002E, 0x0030, 0x002E,
                                0x0032, 0x002E, 0x0038, 0x0000 }; /* 1.0.2.8 */
-    UBool isModified = FALSE;
     UVersionInfo version;
     UErrorCode status = U_ZERO_ERROR;
 
@@ -277,15 +296,10 @@ static void TestVersion()
     u_getDataVersion(version, &status);
     if (U_FAILURE(status)) {
         log_data_err("ERROR: Unable to get data version. %s\n", u_errorName(status));
-    } else {
-        u_isDataOlder(version, &isModified, &status);
-        if (U_FAILURE(status)) {
-            log_err("ERROR: Unable to compare data version. %s\n", u_errorName(status));
-        }
     }
 }
 
-static void TestCompareVersions()
+static void TestCompareVersions(void)
 {
    /* use a 1d array to be palatable to java */
    const char *testCases[] = {
@@ -452,6 +466,56 @@ static void TestErrorName(void){
     }
 }
 
+#define AESTRNCPY_SIZE 13
+
+static const char * dump_binline(uint8_t *bytes) {
+  static char buf[512];
+  int32_t i;
+  for(i=0;i<13;i++) {
+    sprintf(buf+(i*3), "%02x ", bytes[i]);
+  }
+  return buf;
+}
+
+static void Test_aestrncpy(int32_t line, const uint8_t *expect, const uint8_t *src, int32_t len)
+{
+  uint8_t str_buf[AESTRNCPY_SIZE] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  uint8_t *ret;
+
+  log_verbose("\n%s:%d: Beginning test of uprv_aestrncpy(dst, src, %d)\n", __FILE__, line, len);
+  ret = uprv_aestrncpy(str_buf, src, len);
+  if(ret != str_buf) {
+    log_err("\n%s:%d: FAIL: uprv_aestrncpy returned %p expected %p\n", __FILE__, line, (void*)ret, (void*)str_buf);
+  }
+  if(!uprv_memcmp(str_buf, expect, AESTRNCPY_SIZE)) {
+    log_verbose("\n%s:%d: OK - compared OK.", __FILE__, line);
+    log_verbose("\n%s:%d:         expected: %s", __FILE__, line, dump_binline((uint8_t *)expect));
+    log_verbose("\n%s:%d:         got     : %s\n", __FILE__, line, dump_binline(str_buf));
+  } else {
+    log_err    ("\n%s:%d: FAIL: uprv_aestrncpy output differs", __FILE__, line);
+    log_err    ("\n%s:%d:         expected: %s", __FILE__, line, dump_binline((uint8_t *)expect));
+    log_err    ("\n%s:%d:         got     : %s\n", __FILE__, line, dump_binline(str_buf));
+  }
+}
+
+static void TestString(void)
+{
+
+  uint8_t str_tst[AESTRNCPY_SIZE] = { 0x81, 0x4b, 0x5c, 0x82, 0x25, 0x00, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f };
+
+  uint8_t str_exp1[AESTRNCPY_SIZE] = { 0x61, 0x2e, 0x2a, 0x62, 0x0a, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  uint8_t str_exp2[AESTRNCPY_SIZE] = { 0x61, 0x2e, 0x2a, 0x62, 0x0a, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+  uint8_t str_exp3[AESTRNCPY_SIZE] = { 0x61, 0x2e, 0x2a, 0x62, 0x0a, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff };
+
+  
+
+  /* test #1- copy with -1 length */
+  Test_aestrncpy(__LINE__, str_exp1, str_tst, -1);
+  Test_aestrncpy(__LINE__, str_exp1, str_tst, 6);
+  Test_aestrncpy(__LINE__, str_exp2, str_tst, 5);
+  Test_aestrncpy(__LINE__, str_exp3, str_tst, 8);
+}
+
 void addPUtilTest(TestNode** root);
 
 static void addToolUtilTests(TestNode** root);
@@ -464,7 +528,7 @@ addPUtilTest(TestNode** root)
 /*    addTest(root, &testIEEEremainder,  "putiltst/testIEEEremainder"); */
     addTest(root, &TestErrorName, "putiltst/TestErrorName");
     addTest(root, &TestPUtilAPI,       "putiltst/TestPUtilAPI");
-
+    addTest(root, &TestString,    "putiltst/TestString");
     addToolUtilTests(root);
 }
 
@@ -592,21 +656,9 @@ static void toolutil_findDirname(void)
     },
     {
       "pkgdata",
-      1,
-      U_BUFFER_OVERFLOW_ERROR,
-      NULL
-    },
-    {
-      "pkgdata",
       2,
       U_ZERO_ERROR,
-      "."
-    },
-    {
-      "pkgdata",
-      20,
-      U_ZERO_ERROR,
-      "."
+      ""
     }
   };
   int32_t count=(sizeof(testCases)/sizeof(testCases[0]));
@@ -638,6 +690,7 @@ static void toolutil_findDirname(void)
 static void addToolUtilTests(TestNode** root) {
     addTest(root, &toolutil_findBasename,       "putiltst/toolutil/findBasename");
     addTest(root, &toolutil_findDirname,       "putiltst/toolutil/findDirname");
+    addTest(root, &TestSignedRightShiftIsArithmetic, "putiltst/toolutil/TestSignedRightShiftIsArithmetic");
   /*
     Not yet tested:
 

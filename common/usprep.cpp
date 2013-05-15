@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- *   Copyright (C) 2003-2010, International Business Machines
+ *   Copyright (C) 2003-2012, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -43,16 +43,16 @@ Static cache for already opened StringPrep profiles
 */
 static UHashtable *SHARED_DATA_HASHTABLE = NULL;
 
-static UMTX usprepMutex = NULL;
+static UMutex usprepMutex = U_MUTEX_INITIALIZER;
 
 /* format version of spp file */
-static uint8_t formatVersion[4]={ 0, 0, 0, 0 };
+//static uint8_t formatVersion[4]={ 0, 0, 0, 0 };
 
 /* the Unicode version of the sprep data */
 static UVersionInfo dataVersion={ 0, 0, 0, 0 };
 
 /* Profile names must be aligned to UStringPrepProfileType */
-static const char *PROFILE_NAMES[] = {
+static const char * const PROFILE_NAMES[] = {
     "rfc3491",      /* USPREP_RFC3491_NAMEPREP */
     "rfc3530cs",    /* USPREP_RFC3530_NFS4_CS_PREP */
     "rfc3530csci",  /* USPREP_RFC3530_NFS4_CS_PREP_CI */
@@ -86,7 +86,7 @@ isSPrepAcceptable(void * /* context */,
         pInfo->formatVersion[2]==UTRIE_SHIFT &&
         pInfo->formatVersion[3]==UTRIE_INDEX_SHIFT
     ) {
-        uprv_memcpy(formatVersion, pInfo->formatVersion, 4);
+        //uprv_memcpy(formatVersion, pInfo->formatVersion, 4);
         uprv_memcpy(dataVersion, pInfo->dataVersion, 4);
         return TRUE;
     } else {
@@ -196,9 +196,6 @@ static UBool U_CALLCONV usprep_cleanup(void){
         }
     }
 
-    umtx_destroy(&usprepMutex);             /* Don't worry about destroying the mutex even  */
-                                            /*  if the hash table still exists.  The mutex  */
-                                            /*  will lazily re-init  itself if needed.      */
     return (SHARED_DATA_HASHTABLE == NULL);
 }
 U_CDECL_END
@@ -348,17 +345,13 @@ usprep_getProfile(const char* path,
         if(!loadData(newProfile.getAlias(), path, name, _SPREP_DATA_TYPE, status) || U_FAILURE(*status) ){
             return NULL;
         }
-        
+
         /* get the options */
         newProfile->doNFKC = (UBool)((newProfile->indexes[_SPREP_OPTIONS] & _SPREP_NORMALIZATION_ON) > 0);
         newProfile->checkBiDi = (UBool)((newProfile->indexes[_SPREP_OPTIONS] & _SPREP_CHECK_BIDI_ON) > 0);
 
         if(newProfile->checkBiDi) {
-            newProfile->bdp = ubidi_getSingleton(status);
-            if(U_FAILURE(*status)) {
-                usprep_unload(newProfile.getAlias());
-                return NULL;
-            }
+            newProfile->bdp = ubidi_getSingleton();
         }
 
         LocalMemory<UStringPrepKey> key;
@@ -374,19 +367,27 @@ usprep_getProfile(const char* path,
             return NULL;
         }
 
-        /* initialize the key members */
-        key->name = keyName.orphan();
-        uprv_strcpy(key->name, name);
-        if(path != NULL){
-            key->path = keyPath.orphan();
-            uprv_strcpy(key->path, path);
-        }        
-
-        profile = newProfile.orphan();
         umtx_lock(&usprepMutex);
-        /* add the data object to the cache */
-        profile->refCount = 1;
-        uhash_put(SHARED_DATA_HASHTABLE, key.orphan(), profile, status);
+        // If another thread already inserted the same key/value, refcount and cleanup our thread data
+        profile = (UStringPrepProfile*) (uhash_get(SHARED_DATA_HASHTABLE,&stackKey));
+        if(profile != NULL) {
+            profile->refCount++;
+            usprep_unload(newProfile.getAlias());
+        }
+        else {
+            /* initialize the key members */
+            key->name = keyName.orphan();
+            uprv_strcpy(key->name, name);
+            if(path != NULL){
+                key->path = keyPath.orphan();
+                uprv_strcpy(key->path, path);
+            }        
+            profile = newProfile.orphan();
+    
+            /* add the data object to the cache */
+            profile->refCount = 1;
+            uhash_put(SHARED_DATA_HASHTABLE, key.orphan(), profile, status);
+        }
         umtx_unlock(&usprepMutex);
     }
 

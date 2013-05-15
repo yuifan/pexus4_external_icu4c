@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2010, International Business Machines Corporation and
+ * Copyright (c) 1997-2012, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -13,6 +13,7 @@
 #include "unicode/coll.h"
 #include "cstring.h"
 #include <stdio.h>
+#include <string.h>
 #include "putilimp.h"
 #include "unicode/ustring.h"
 
@@ -46,19 +47,19 @@ static const char* const rawData[33][8] = {
         // display name (English)
         // Updated no_NO_NY English display name for new pattern-based algorithm
         // (part of Euro support).
-        {   "English (United States)", "French (France)", "Catalan (Spain)", "Greek (Greece)", "Norwegian (Norway, NY)", "Italian", "xx (YY)", "Chinese (Simplified Han, China)" },
+        {   "English (United States)", "French (France)", "Catalan (Spain)", "Greek (Greece)", "Norwegian (Norway, NY)", "Italian", "xx (YY)", "Chinese (Simplified, China)" },
 
         // display langage (French)
         {   "anglais",  "fran\\u00E7ais",   "catalan", "grec",    "norv\\u00E9gien",    "italien", "xx", "chinois" },
         // display script (French)
-        {   "",     "",     "",     "",     "",     "",     "",   "id\\u00E9ogrammes han simplifi\\u00E9s" },
+        {   "",     "",     "",     "",     "",     "",     "",   "chinois simplifi\\u00E9" },
         // display country (French)
         {   "\\u00C9tats-Unis",    "France",   "Espagne",  "Gr\\u00E8ce",   "Norv\\u00E8ge", "", "YY", "Chine" },
         // display variant (French)
         {   "",     "",     "",     "",     "NY",     "",     "",   "" },
         // display name (French)
         //{   "anglais (Etats-Unis)", "francais (France)", "catalan (Espagne)", "grec (Grece)", "norvegien (Norvege,Nynorsk)", "italien", "xx (YY)" },
-        {   "anglais (\\u00C9tats-Unis)", "fran\\u00E7ais (France)", "catalan (Espagne)", "grec (Gr\\u00E8ce)", "norv\\u00E9gien (Norv\\u00E8ge, NY)", "italien", "xx (YY)", "chinois (id\\u00E9ogrammes han simplifi\\u00E9s, Chine)" }, // STILL not right
+        {   "anglais (\\u00C9tats-Unis)", "fran\\u00E7ais (France)", "catalan (Espagne)", "grec (Gr\\u00E8ce)", "norv\\u00E9gien (Norv\\u00E8ge, NY)", "italien", "xx (YY)", "chinois (simplifi\\u00E9, Chine)" }, // STILL not right
 
 
         /* display language (Catalan) */
@@ -70,7 +71,7 @@ static const char* const rawData[33][8] = {
         /* display variant (Catalan) */
         {   "", "", "",                    "", "NY", "", "" },
         /* display name (Catalan) */
-        {   "angl\\u00E8s (Estats Units)", "franc\\u00E8s (Fran\\u00E7a)", "catal\\u00E0 (Espanya)", "grec (Gr\\u00E8cia)", "noruec (Noruega, NY)", "itali\\u00E0", "", "xin\\u00E8s (xin\\u00E8s simplificat, Xina)" },
+        {   "angl\\u00E8s (Estats Units)", "franc\\u00E8s (Fran\\u00E7a)", "catal\\u00E0 (Espanya)", "grec (Gr\\u00E8cia)", "noruec (Noruega, NY)", "itali\\u00E0", "", "xin\\u00E8s (simplificat, Xina)" },
 
         // display langage (Greek)[actual values listed below]
         {   "\\u0391\\u03b3\\u03b3\\u03bb\\u03b9\\u03ba\\u03ac",
@@ -83,7 +84,7 @@ static const char* const rawData[33][8] = {
             "\\u039A\\u03B9\\u03BD\\u03B5\\u03B6\\u03B9\\u03BA\\u03AC"
         },
         // display script (Greek)
-        {   "", "", "", "", "", "", "", "\\u0391\\u03c0\\u03bb\\u03bf\\u03c0\\u03bf\\u03b9\\u03b7\\u03bc\\u03ad\\u03bd\\u03bf \\u039a\\u03b9\\u03bd\\u03b5\\u03b6\\u03b9\\u03ba\\u03cc" },
+        {   "", "", "", "", "", "", "", "\\u0391\\u03c0\\u03bb\\u03bf\\u03c0\\u03bf\\u03b9\\u03b7\\u03bc\\u03ad\\u03bd\\u03b1 \\u03a7\\u03b1\\u03bd" },
         // display country (Greek)[actual values listed below]
         {   "\\u0397\\u03BD\\u03C9\\u03BC\\u03AD\\u03BD\\u03B5\\u03C2 \\u03A0\\u03BF\\u03BB\\u03B9\\u03C4\\u03B5\\u03AF\\u03B5\\u03C2 \\u03C4\\u03B7\\u03C2 \\u0391\\u03BC\\u03B5\\u03C1\\u03B9\\u03BA\\u03AE\\u03C2",
             "\\u0393\\u03b1\\u03bb\\u03bb\\u03af\\u03b1",
@@ -101,10 +102,10 @@ static const char* const rawData[33][8] = {
             "\\u0393\\u03b1\\u03bb\\u03bb\\u03b9\\u03ba\\u03ac (\\u0393\\u03b1\\u03bb\\u03bb\\u03af\\u03b1)",
             "\\u039a\\u03b1\\u03c4\\u03b1\\u03bb\\u03b1\\u03bd\\u03b9\\u03ba\\u03ac (\\u0399\\u03c3\\u03c0\\u03b1\\u03bd\\u03af\\u03b1)",
             "\\u0395\\u03bb\\u03bb\\u03b7\\u03bd\\u03b9\\u03ba\\u03ac (\\u0395\\u03bb\\u03bb\\u03ac\\u03b4\\u03b1)",
-            "\\u039d\\u03bf\\u03c1\\u03b2\\u03b7\\u03b3\\u03b9\\u03ba\\u03ac (\\u039d\\u03bf\\u03c1\\u03b2\\u03b7\\u03b3\\u03af\\u03b1, NY)",
+            "\\u039d\\u03bf\\u03c1\\u03b2\\u03b7\\u03b3\\u03b9\\u03ba\\u03ac (\\u039d\\u03bf\\u03c1\\u03b2\\u03b7\\u03b3\\u03af\\u03b1,NY)",
             "\\u0399\\u03c4\\u03b1\\u03bb\\u03b9\\u03ba\\u03ac",
             "",
-            "\\u039A\\u03B9\\u03BD\\u03B5\\u03B6\\u03B9\\u03BA\\u03AC (\\u0391\\u03c0\\u03bb\\u03bf\\u03c0\\u03bf\\u03b9\\u03b7\\u03bc\\u03ad\\u03bd\\u03bf \\u039a\\u03b9\\u03bd\\u03b5\\u03b6\\u03b9\\u03ba\\u03cc, \\u039A\\u03AF\\u03BD\\u03B1)"
+            "\\u039A\\u03B9\\u03BD\\u03B5\\u03B6\\u03B9\\u03BA\\u03AC (\\u0391\\u03c0\\u03bb\\u03bf\\u03c0\\u03bf\\u03b9\\u03b7\\u03bc\\u03ad\\u03bd\\u03bf \\u039a\\u03b9\\u03bd\\u03b5\\u03b6\\u03b9\\u03ba\\u03cc,\\u039A\\u03AF\\u03BD\\u03B1)"
         },
 
         // display langage (<root>)
@@ -482,21 +483,24 @@ LocaleTest::TestDisplayNames()
     /* Check to see if ICU supports this locale */
     if (symb.getLocale(ULOC_VALID_LOCALE, status) != Locale("root")) {
         /* test that the default locale has a display name for its own language */
-        Locale().getDisplayLanguage(Locale(), s);
-        if(s.length()<=3 && s.charAt(0)<=0x7f) {
-            /* check <=3 to reject getting the language code as a display name */
-            dataerrln("unable to get a display string for the language of the default locale.\n");
-        }
+        /* Currently, there is no language information in the "tl" data file so this test will fail if default locale is "tl" */
+        if (uprv_strcmp(Locale().getLanguage(), "tl") != 0) {
+            Locale().getDisplayLanguage(Locale(), s);
+            if(s.length()<=3 && s.charAt(0)<=0x7f) {
+                /* check <=3 to reject getting the language code as a display name */
+                dataerrln("unable to get a display string for the language of the default locale: " + s);
+            }
 
-        /*
-         * API coverage improvements: call
-         * Locale::getDisplayLanguage(UnicodeString &) and
-         * Locale::getDisplayCountry(UnicodeString &)
-         */
-        s.remove();
-        Locale().getDisplayLanguage(s);
-        if(s.length()<=3 && s.charAt(0)<=0x7f) {
-            dataerrln("unable to get a display string for the language of the default locale [2].\n");
+            /*
+             * API coverage improvements: call
+             * Locale::getDisplayLanguage(UnicodeString &) and
+             * Locale::getDisplayCountry(UnicodeString &)
+             */
+            s.remove();
+            Locale().getDisplayLanguage(s);
+            if(s.length()<=3 && s.charAt(0)<=0x7f) {
+                dataerrln("unable to get a display string for the language of the default locale [2]: " + s);
+            }
         }
     }
     else {
@@ -864,8 +868,8 @@ LocaleTest::TestGetLangsAndCountries()
       ;
 
     /* TODO: Change this test to be more like the cloctst version? */
-    if (testCount != 491)
-        errln("Expected getISOLanguages() to return 491 languages; it returned %d", testCount);
+    if (testCount != 538)
+        errln("Expected getISOLanguages() to return 538 languages; it returned %d", testCount);
     else {
         for (i = 0; i < 15; i++) {
             int32_t j;
@@ -896,7 +900,7 @@ LocaleTest::TestGetLangsAndCountries()
       ;
 
     if (testCount != 246){
-        errln("Expected getISOCountries to return 240 countries; it returned %d", testCount);
+        errln("Expected getISOCountries to return 246 countries; it returned %d", testCount);
     }else {
         for (i = 0; i < spot2Len; i++) {
             int32_t j;
@@ -912,8 +916,8 @@ LocaleTest::TestGetLangsAndCountries()
                 errln("Couldn't find " + spotCheck2[i] + " in country list.");
         }
     }
-        for (i = 0; i < testCount; i++) {
-      UnicodeString testee(test[i],"");
+    for (i = 0; i < testCount; i++) {
+        UnicodeString testee(test[i],"");
         UnicodeString uc(test[i],"");
         if (testee != uc.toUpper())
             errln(testee + " is not all upper case.");
@@ -921,6 +925,26 @@ LocaleTest::TestGetLangsAndCountries()
             errln(testee + " is not two characters long.");
         if (i > 0 && testee.compare(test[i - 1]) <= 0)
             errln(testee + " appears in an out-of-order position in the list.");
+    }
+
+    // This getAvailableLocales and getISO3Language
+    {
+        int32_t numOfLocales;
+        Locale  enLoc ("en");
+        const Locale *pLocales = Locale::getAvailableLocales(numOfLocales);
+
+        for (int i = 0; i < numOfLocales; i++) {
+            const Locale    &loc(pLocales[i]);
+            UnicodeString   name;
+            char        szName[200];
+
+            loc.getDisplayName (enLoc, name);
+            name.extract (0, 200, szName, sizeof(szName));
+
+            if (strlen(loc.getISO3Language()) == 0) {
+                errln("getISO3Language() returned an empty string for: " + name);
+            }
+        }
     }
 }
 
@@ -1317,8 +1341,13 @@ LocaleTest::Test4139940()
     UChar ocf = 0x00f4;
     UChar oda = 0x0151;
     if (str.indexOf(oda) < 0 || str.indexOf(ocf) >= 0) {
-      errln("Fail: Monday in Hungarian is wrong - oda's index is %d and ocf's is %d",
-            str.indexOf(oda), str.indexOf(ocf));
+      /* If the default locale is "th" this test will fail because of the buddhist calendar. */
+      if (strcmp(Locale::getDefault().getLanguage(), "th") != 0) {
+        errln("Fail: Monday in Hungarian is wrong - oda's index is %d and ocf's is %d",
+              str.indexOf(oda), str.indexOf(ocf));
+      } else {
+        logln(UnicodeString("An error is produce in buddhist calendar."));
+      }
       logln(UnicodeString("String is: ") + str );
     }
 }
@@ -1835,12 +1864,12 @@ void LocaleTest::TestGetLocale(void) {
     // DecimalFormat, DecimalFormatSymbols
 #if !UCONFIG_NO_FORMATTING
     req = "fr_FR_NICE";
-    DecimalFormat* dec = (DecimalFormat*)
-    NumberFormat::createInstance(Locale::createFromName(req), ec);
+    NumberFormat* nf = NumberFormat::createInstance(Locale::createFromName(req), ec);
     if (U_FAILURE(ec)) {
         dataerrln("FAIL: NumberFormat::createInstance failed - %s", u_errorName(ec));
     } else {
-        if (dec->getDynamicClassID() != DecimalFormat::getStaticClassID()) {
+        DecimalFormat* dec = dynamic_cast<DecimalFormat*>(nf);
+        if (dec == NULL) {
             errln("FAIL: NumberFormat::createInstance does not return a DecimalFormat");
             return;
         }
@@ -1865,20 +1894,21 @@ void LocaleTest::TestGetLocale(void) {
             _checklocs("DecimalFormatSymbols", req, valid, actual);
         }        
     }
-    delete dec;
+    delete nf;
 #endif
 
     // DateFormat, DateFormatSymbols
 #if !UCONFIG_NO_FORMATTING
     req = "de_CH_LUCERNE";
-    SimpleDateFormat* dat = (SimpleDateFormat*)
+    DateFormat* df =
         DateFormat::createDateInstance(DateFormat::kDefault,
                                        Locale::createFromName(req));
-    if (dat == 0){
+    if (df == 0){
         dataerrln("Error calling DateFormat::createDateInstance()");
     } else {
-        if (dat->getDynamicClassID() != SimpleDateFormat::getStaticClassID()) {
-            errln("FAIL: NumberFormat::createInstance does not return a DecimalFormat");
+        SimpleDateFormat* dat = dynamic_cast<SimpleDateFormat*>(df);
+        if (dat == NULL) {
+            errln("FAIL: DateFormat::createInstance does not return a SimpleDateFormat");
             return;
         }
         valid = dat->getLocale(ULOC_VALID_LOCALE, ec);
@@ -1902,7 +1932,7 @@ void LocaleTest::TestGetLocale(void) {
             _checklocs("DateFormatSymbols", req, valid, actual);
         }        
     }
-    delete dat;
+    delete df;
 #endif
 
     // BreakIterator
@@ -2034,23 +2064,27 @@ void LocaleTest::TestGetLocale(void) {
 void LocaleTest::TestVariantWithOutCountry(void) {
     Locale loc("en","","POSIX");
     if (0 != strcmp(loc.getVariant(), "POSIX")) {
-        errln("FAIL: en__POSIX didn't get parsed correctly");
+        errln("FAIL: en__POSIX didn't get parsed correctly - name is %s - expected %s got %s", loc.getName(), "POSIX", loc.getVariant());
     }
     Locale loc2("en","","FOUR");
     if (0 != strcmp(loc2.getVariant(), "FOUR")) {
-        errln("FAIL: en__FOUR didn't get parsed correctly");
+        errln("FAIL: en__FOUR didn't get parsed correctly - name is %s - expected %s got %s", loc2.getName(), "FOUR", loc2.getVariant());
     }
     Locale loc3("en","Latn","","FOUR");
     if (0 != strcmp(loc3.getVariant(), "FOUR")) {
-        errln("FAIL: en_Latn__FOUR didn't get parsed correctly");
+        errln("FAIL: en_Latn__FOUR didn't get parsed correctly - name is %s - expected %s got %s", loc3.getName(), "FOUR", loc3.getVariant());
     }
     Locale loc4("","Latn","","FOUR");
     if (0 != strcmp(loc4.getVariant(), "FOUR")) {
-        errln("FAIL: _Latn__FOUR didn't get parsed correctly");
+        errln("FAIL: _Latn__FOUR didn't get parsed correctly - name is %s - expected %s got %s", loc4.getName(), "FOUR", loc4.getVariant());
     }
     Locale loc5("","Latn","US","FOUR");
     if (0 != strcmp(loc5.getVariant(), "FOUR")) {
-        errln("FAIL: _Latn_US_FOUR didn't get parsed correctly");
+        errln("FAIL: _Latn_US_FOUR didn't get parsed correctly - name is %s - expected %s got %s", loc5.getName(), "FOUR", loc5.getVariant());
+    }
+    Locale loc6("de-1901");
+    if (0 != strcmp(loc6.getVariant(), "1901")) {
+        errln("FAIL: de-1901 didn't get parsed correctly - name is %s - expected %s got %s", loc6.getName(), "1901", loc6.getVariant());
     }
 }
 
@@ -2075,6 +2109,9 @@ void LocaleTest::TestCanonicalization(void)
         const char *getNameID;   /* expected getName() result */
         const char *canonicalID; /* expected canonicalize() result */
     } testCases[] = {
+        { "", "", "en_US_POSIX" },
+        { "C", "c", "en_US_POSIX" },
+        { "POSIX", "posix", "en_US_POSIX" },
         { "ca_ES_PREEURO-with-extra-stuff-that really doesn't make any sense-unless-you're trying to increase code coverage",
           "ca_ES_PREEURO_WITH_EXTRA_STUFF_THAT REALLY DOESN'T MAKE ANY SENSE_UNLESS_YOU'RE TRYING TO INCREASE CODE COVERAGE",
           "ca_ES_PREEURO_WITH_EXTRA_STUFF_THAT REALLY DOESN'T MAKE ANY SENSE_UNLESS_YOU'RE TRYING TO INCREASE CODE COVERAGE"},
@@ -2117,9 +2154,9 @@ void LocaleTest::TestCanonicalization(void)
         { "qz-qz@Euro", "qz_QZ@Euro", "qz_QZ@currency=EUR" }, /* qz-qz uses private use iso codes */
         // NOTE: uloc_getName() works on en-BOONT, but Locale() parser considers it BOGUS
         // TODO: unify this behavior
-        { "en-BOONT", "BOGUS", "en__BOONT" }, /* registered name */
-        { "de-1901", "de_1901", "de__1901" }, /* registered name */
-        { "de-1906", "de_1906", "de__1906" }, /* registered name */
+        { "en-BOONT", "en__BOONT", "en__BOONT" }, /* registered name */
+        { "de-1901", "de__1901", "de__1901" }, /* registered name */
+        { "de-1906", "de__1906", "de__1906" }, /* registered name */
         { "sr-SP-Cyrl", "sr_SP_CYRL", "sr_Cyrl_RS" }, /* .NET name */
         { "sr-SP-Latn", "sr_SP_LATN", "sr_Latn_RS" }, /* .NET name */
         { "sr_YU_CYRILLIC", "sr_YU_CYRILLIC", "sr_Cyrl_RS" }, /* Linux name */

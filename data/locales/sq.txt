@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/sq.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/sq.xml
 // *
 // ***************************************************************************
 /**
@@ -23,26 +23,17 @@ sq{
         "Latn",
     }
     NumberElements{
-        ",",
-        ".",
-        ";",
-        "%",
-        "0",
-        "#",
-        "-",
-        "E",
-        "‰",
-        "∞",
-        "NaN",
-        "+",
+        latn{
+            patterns{
+                currencyFormat{"¤#,##0.00"}
+            }
+            symbols{
+                decimal{","}
+                group{" "}
+            }
+        }
     }
-    NumberPatterns{
-        "#,##0.###",
-        "¤#,##0.00",
-        "#,##0%",
-        "#E0",
-    }
-    Version{"2.0.47.69"}
+    Version{"2.0.77.38"}
     calendar{
         gregorian{
             AmPmMarkers{
@@ -83,9 +74,9 @@ sq{
                 ms{"mm.ss"}
                 y{"y"}
                 yM{"M.yyyy"}
-                yMEd{"EEE, d.M.yyyy"}
+                yMEd{"E, d.M.yyyy"}
                 yMMM{"MMM y"}
-                yMMMEd{"d MMM y"}
+                yMMMEd{"E, d MMM y"}
                 yMMMM{"MMMM y"}
                 yyyyMMMM{"MMMM y"}
             }
@@ -194,6 +185,12 @@ sq{
             }
         }
     }
+    delimiters{
+        alternateQuotationEnd{"‘"}
+        alternateQuotationStart{"‚"}
+        quotationEnd{"“"}
+        quotationStart{"„"}
+    }
     units{
         day{
             one{"{0} ditë"}
@@ -201,6 +198,7 @@ sq{
         }
         hour{
             one{"{0} orë"}
+            other{"{0} orë"}
         }
         minute{
             one{"{0} minutë"}
@@ -208,6 +206,7 @@ sq{
         }
         month{
             one{"{0} muaj"}
+            other{"{0} muaj"}
         }
         second{
             one{"{0} sekondë"}
@@ -215,6 +214,7 @@ sq{
         }
         week{
             one{"{0} javë"}
+            other{"{0} javë"}
         }
         year{
             one{"{0} vit"}

@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1999-2009, International Business Machines
+*   Copyright (C) 1999-2011, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -21,6 +21,10 @@
 #include "unicode/ubidi.h"
 #include "ubidiimp.h"
 #include "uassert.h"
+
+#ifndef U_COMMON_IMPLEMENTATION
+#error U_COMMON_IMPLEMENTATION not set - must be set for all ICU source files in common/ - see http://userguide.icu-project.org/howtouseicu
+#endif
 
 /*
  * General remarks about the functions in this file:
@@ -664,7 +668,8 @@ ubidi_getRuns(UBiDi *pBiDi, UErrorCode *pErrorCode) {
             limit=0;
             for(i=0; i<runCount; ++i) {
                 ADD_ODD_BIT_FROM_LEVEL(runs[i].logicalStart, levels[runs[i].logicalStart]);
-                limit=runs[i].visualLimit+=limit;
+                limit+=runs[i].visualLimit;
+                runs[i].visualLimit=limit;
             }
 
             /* Set the "odd" bit for the trailing WS run. */

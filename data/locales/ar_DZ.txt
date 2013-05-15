@@ -1,22 +1,27 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/ar_DZ.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/ar_DZ.xml
 // *
 // ***************************************************************************
 ar_DZ{
-    Version{"2.0.48.49"}
+    NumberElements{
+        default{"latn"}
+        latn{
+            symbols{
+                decimal{","}
+                group{"."}
+            }
+        }
+    }
+    Version{"2.0.77.46"}
     calendar{
         gregorian{
-            DateTimeElements:intvector{
-                7,
-                4,
-            }
             DateTimePatterns{
-                "zzzz h:mm:ss a",
-                "z h:mm:ss a",
+                "h:mm:ss a zzzz",
+                "h:mm:ss a z",
                 "h:mm:ss a",
                 "h:mm a",
                 "EEEE، d MMMM، y",
@@ -49,13 +54,96 @@ ar_DZ{
                     y{"y‏-y"}
                 }
             }
-            weekend:intvector{
-                5,
-                0,
-                6,
-                86400000,
+            monthNames{
+                format{
+                    abbreviated{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                    narrow{
+                        "ج",
+                        "ف",
+                        "م",
+                        "أ",
+                        "م",
+                        "ج",
+                        "ج",
+                        "أ",
+                        "س",
+                        "أ",
+                        "ن",
+                        "د",
+                    }
+                    wide{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                }
+                stand-alone{
+                    abbreviated{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                    narrow{
+                        "ج",
+                        "ف",
+                        "م",
+                        "أ",
+                        "م",
+                        "ج",
+                        "ج",
+                        "أ",
+                        "س",
+                        "أ",
+                        "ن",
+                        "د",
+                    }
+                    wide{
+                        "جانفي",
+                        "فيفري",
+                        "مارس",
+                        "أفريل",
+                        "ماي",
+                        "جوان",
+                        "جويلية",
+                        "أوت",
+                        "سبتمبر",
+                        "أكتوبر",
+                        "نوفمبر",
+                        "ديسمبر",
+                    }
+                }
             }
         }
     }
-    defaultNumberingSystem{"latn"}
 }

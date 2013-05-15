@@ -43,6 +43,18 @@
 #$(call add-clean-step, rm -rf $(OUT_DIR)/target/common/obj/JAVA_LIBRARIES/core_intermediates)
 #$(call add-clean-step, find $(OUT_DIR) -type f -name "IGTalkSession*" -print0 | xargs -0 rm -f)
 #$(call add-clean-step, rm -rf $(PRODUCT_OUT)/data/*)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/libicuuc_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/libicui18n_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/system/usr/icu)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/ETC/icu.data_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/ETC/icu.dat_intermediates)
+$(call add-clean-step, rm -rf $(HOST_OUT)/obj/SHARED_LIBRARIES/libicuuc_intermediates)
+$(call add-clean-step, rm -rf $(HOST_OUT)/obj/SHARED_LIBRARIES/libicui18n_intermediates)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/libicuuc_intermediates)
+$(call add-clean-step, rm -rf $(HOST_OUT)/obj/SHARED_LIBRARIES/libicuuc_intermediates)
+$(call add-clean-step, touch -c external/icu4c/common/udata.cpp)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/obj/SHARED_LIBRARIES/stubdata)
+$(call add-clean-step, rm -rf $(HOST_OUT)/obj/SHARED_LIBRARIES/stubdata)
 
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST

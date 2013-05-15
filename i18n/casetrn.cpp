@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2001-2008, International Business Machines
+*   Copyright (C) 2001-2011, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -22,6 +22,8 @@
 
 #include "unicode/uchar.h"
 #include "unicode/ustring.h"
+#include "unicode/utf.h"
+#include "unicode/utf16.h"
 #include "tolowtrn.h"
 #include "ucase.h"
 #include "cpputils.h"
@@ -88,12 +90,9 @@ UOBJECT_DEFINE_ABSTRACT_RTTI_IMPLEMENTATION(CaseMapTransliterator)
  */
 CaseMapTransliterator::CaseMapTransliterator(const UnicodeString &id, UCaseMapFull *map) : 
     Transliterator(id, 0),
-    fCsp(NULL),
+    fCsp(ucase_getSingleton()),
     fMap(map)
 {
-    UErrorCode errorCode = U_ZERO_ERROR;
-    fCsp = ucase_getSingleton(&errorCode); // expect to get NULL if failure
-
     // TODO test incremental mode with context-sensitive text (e.g. greek sigma)
     // TODO need to call setMaximumContextLength()?!
 }

@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2010, International Business Machines Corporation and         *
-* others. All Rights Reserved.                                                *
+* Copyright (C) 2009-2011, International Business Machines Corporation and
+* others. All Rights Reserved.
 *******************************************************************************
 */
 
@@ -11,7 +11,9 @@
  */
 
 #include "unicode/utypes.h"
-#include "unicode/utypes.h"
+
+#if !UCONFIG_NO_FORMATTING
+
 #include "unicode/uobject.h"
 #include "vzone.h"
 #include "unicode/vtzone.h"
@@ -62,7 +64,7 @@ vzone_getTZURL(VZone* zone, UChar* & url, int32_t & urlLength) {
 U_CAPI void U_EXPORT2
 vzone_setTZURL(VZone* zone, UChar* url, int32_t urlLength) {
     UnicodeString s(urlLength==-1, url, urlLength);
-    return ((VTimeZone*)zone)->VTimeZone::setTZURL(url);
+    ((VTimeZone*)zone)->VTimeZone::setTZURL(s);
 }
 
 U_CAPI UBool U_EXPORT2
@@ -179,3 +181,5 @@ U_CAPI UClassID U_EXPORT2
 vzone_getDynamicClassID(VZone* zone) {
     return ((VTimeZone*)zone)->VTimeZone::getDynamicClassID();
 }
+
+#endif

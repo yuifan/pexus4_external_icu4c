@@ -1,6 +1,6 @@
 /*
 ***************************************************************************
-* Copyright (C) 2008-2010, International Business Machines Corporation
+* Copyright (C) 2008-2012, International Business Machines Corporation
 * and others. All Rights Reserved.
 ***************************************************************************
 *   file name:  uspoof.h
@@ -13,11 +13,6 @@
 *
 *   Unicode Spoof Detection
 */
-
-/**
- * \file
- * \brief C API: Unicode Spoof Detection
- */
 
 #ifndef USPOOF_H
 #define USPOOF_H
@@ -33,14 +28,12 @@
 #if U_SHOW_CPLUSPLUS_API
 #include "unicode/unistr.h"
 #include "unicode/uniset.h"
-
-U_NAMESPACE_USE
 #endif
 
 
- /**
- *
- * \brief C API for Unicode Security and Spoofing Detection.
+/**
+ * \file
+ * \brief Unicode Security and Spoofing Detection, C API.
  *
  * These functions are intended to check strings, typically
  * identifiers of some type, such as URLs, for the presence of
@@ -53,7 +46,7 @@ U_NAMESPACE_USE
  * "Unicode security considerations", give more background on 
  * security an spoofing issues with Unicode identifiers.
  * The tests and checks provided by this module implement the recommendations
- * from these Unicode documents.
+ * from those Unicode documents.
  *
  * The tests available on identifiers fall into two general categories:
  *   -#  Single identifier tests.  Check whether an identifier is
@@ -114,7 +107,7 @@ U_NAMESPACE_USE
  *       The visually confusable identifier also consists of characters from a single script.
  *       but not the same script as the identifier being checked.
  *    -# USPOOF_ANY_CASE: modifies the mixed script and whole script confusables tests.  If
- *       specified, the checks will confusable characters of any case.  If this flag is not
+ *       specified, the checks will consider confusable characters of any case.  If this flag is not
  *       set, the test is performed assuming case folded identifiers.
  *    -# USPOOF_SINGLE_SCRIPT: check that the identifier contains only characters from a
  *       single script.  (Characters from the 'common' and 'inherited' scripts are ignored.)
@@ -254,7 +247,7 @@ uspoof_open(UErrorCode *status);
  * @see uspoof_serialize
  * @stable ICU 4.2
  */
-U_CAPI USpoofChecker * U_EXPORT2
+U_STABLE USpoofChecker * U_EXPORT2
 uspoof_openFromSerialized(const void *data, int32_t length, int32_t *pActualLength,
                           UErrorCode *pErrorCode);
 
@@ -289,7 +282,7 @@ uspoof_openFromSerialized(const void *data, int32_t length, int32_t *pActualLeng
   * @return            A spoof checker that uses the rules from the input files.
   * @stable ICU 4.2
   */
-U_CAPI USpoofChecker * U_EXPORT2
+U_STABLE USpoofChecker * U_EXPORT2
 uspoof_openFromSource(const char *confusables,  int32_t confusablesLen,
                       const char *confusablesWholeScript, int32_t confusablesWholeScriptLen,
                       int32_t *errType, UParseError *pe, UErrorCode *status);
@@ -314,7 +307,7 @@ U_NAMESPACE_BEGIN
  *
  * @see LocalPointerBase
  * @see LocalPointer
- * @draft ICU 4.4
+ * @stable ICU 4.4
  */
 U_DEFINE_LOCAL_OPEN_POINTER(LocalUSpoofCheckerPointer, USpoofChecker, uspoof_close);
 
@@ -500,7 +493,7 @@ uspoof_getAllowedChars(const USpoofChecker *sc, UErrorCode *status);
  * @stable ICU 4.2
  */
 U_STABLE void U_EXPORT2
-uspoof_setAllowedUnicodeSet(USpoofChecker *sc, const UnicodeSet *chars, UErrorCode *status);
+uspoof_setAllowedUnicodeSet(USpoofChecker *sc, const icu::UnicodeSet *chars, UErrorCode *status);
 
 
 /**
@@ -523,7 +516,7 @@ uspoof_setAllowedUnicodeSet(USpoofChecker *sc, const UnicodeSet *chars, UErrorCo
  *                 the USPOOF_CHAR_LIMIT test.
  * @stable ICU 4.2
  */
-U_STABLE const UnicodeSet * U_EXPORT2
+U_STABLE const icu::UnicodeSet * U_EXPORT2
 uspoof_getAllowedUnicodeSet(const USpoofChecker *sc, UErrorCode *status);
 #endif
 
@@ -606,7 +599,7 @@ uspoof_checkUTF8(const USpoofChecker *sc,
  * 
  * @param sc      The USpoofChecker 
  * @param text    A UnicodeString to be checked for possible security issues.
- * @position      An out parameter that receives the index of the
+ * @param position      An out parameter that receives the index of the
  *                first string position that fails the allowed character
  *                limitation checks.
  *                This parameter may be null if the position information
@@ -626,7 +619,7 @@ uspoof_checkUTF8(const USpoofChecker *sc,
  */
 U_STABLE int32_t U_EXPORT2
 uspoof_checkUnicodeString(const USpoofChecker *sc,
-                          const U_NAMESPACE_QUALIFIER UnicodeString &text, 
+                          const icu::UnicodeString &text, 
                           int32_t *position,
                           UErrorCode *status);
 
@@ -738,8 +731,8 @@ uspoof_areConfusableUTF8(const USpoofChecker *sc,
  */
 U_STABLE int32_t U_EXPORT2
 uspoof_areConfusableUnicodeString(const USpoofChecker *sc,
-                                  const U_NAMESPACE_QUALIFIER UnicodeString &s1,
-                                  const U_NAMESPACE_QUALIFIER UnicodeString &s2,
+                                  const icu::UnicodeString &s1,
+                                  const icu::UnicodeString &s2,
                                   UErrorCode *status);
 #endif
 
@@ -845,20 +838,17 @@ uspoof_getSkeletonUTF8(const USpoofChecker *sc,
   *                USPOOF_ANY_CASE_CONFUSABLE.  The two flags may be ORed.
   * @param s       The input string whose skeleton will be computed.
   * @param dest    The output string, to receive the skeleton string.
-  * @param destCapacity  The length of the output buffer, in bytes.
-  *                The destCapacity may be zero, in which case the function will
-  *                return the actual length of the skeleton.
   * @param status  The error code, set if an error occurred while attempting to
   *                perform the check.
   * @return        A reference to the destination (skeleton) string.
   *                
   * @stable ICU 4.2
   */   
-U_STABLE UnicodeString & U_EXPORT2
+U_I18N_API icu::UnicodeString & U_EXPORT2
 uspoof_getSkeletonUnicodeString(const USpoofChecker *sc,
                                 uint32_t type,
-                                const UnicodeString &s,
-                                UnicodeString &dest,
+                                const icu::UnicodeString &s,
+                                icu::UnicodeString &dest,
                                 UErrorCode *status);
 #endif   /* U_SHOW_CPLUSPLUS_API */
 
@@ -881,7 +871,7 @@ uspoof_getSkeletonUnicodeString(const USpoofChecker *sc,
  * @see utrie2_openFromSerialized()
  * @stable ICU 4.2
  */
-U_CAPI int32_t U_EXPORT2
+U_STABLE int32_t U_EXPORT2
 uspoof_serialize(USpoofChecker *sc,
                  void *data, int32_t capacity,
                  UErrorCode *status);

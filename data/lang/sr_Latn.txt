@@ -1,16 +1,15 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/sr_Latn.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/sr_Latn.xml
 // *
 // ***************************************************************************
 /**
  *  ICU <specials> source: <path>/xml/main/sr_Latn.xml
  */
 sr_Latn{
-    %%ParentIsRoot:int{1}
     Keys{
         calendar{"Kalendar"}
         collation{"Sortiranje"}
@@ -616,7 +615,6 @@ sr_Latn{
         Phnx{"Feničansko pismo"}
         Plrd{"polard fonetsko pismo"}
         Prti{"pisani partian"}
-        Qaai{"nasledno pismo"}
         Rjng{"rejang pismo"}
         Roro{"rongorongo pismo"}
         Runr{"runsko pismo"}
@@ -650,6 +648,7 @@ sr_Latn{
         Xpeo{"Staropersijsko pismo"}
         Xsux{"sumersko-akadsko kuneiform pismo"}
         Yiii{"ji pismo"}
+        Zinh{"nasledno pismo"}
         Zmth{"matematička notacija"}
         Zsym{"simboli"}
         Zxxx{"Nepisani jezik"}
@@ -670,7 +669,6 @@ sr_Latn{
         }
         collation{
             big5han{"Tradicionalno kinesko sortiranje"}
-            direct{"Direktno sortiranje"}
             gb2312han{"Pojednostavljeno kinesko sortiranje"}
             phonebook{"Sortiranje kao telefonski imenik"}
             pinyin{"Pinjin sortiranje"}
@@ -707,7 +705,7 @@ sr_Latn{
         TARASK{"Taraskijevica ortografija"}
         VALENCIA{"Valencijski"}
     }
-    Version{"2.0.48.46"}
+    Version{"2.0.78.38"}
     codePatterns{
         language{"Jezik: {0}"}
         script{"Skript: {0}"}

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 #
 # Copyright (C) 2010 The Android Open Source Project
 #
@@ -13,210 +13,205 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-# Generate ICU dat files for locale relevant resources.
+
+# Generates icudtXXl-default.dat from icudtXXl-all.dat and icu-data-default.txt.
 #
 # Usage:
-#    icu_dat_generator.py  icu-version [-v] [-h]
+#    icu_dat_generator.py [-v] [-h]
 #
 # Sample usage:
-#   $ANDROID_BUILD_TOP/external/icu4c/stubdata$ ./icu_dat_generator.py  4.4 --verbose
-#
-#  Add new dat file:
-#    1. Add icudtxxl-<datname>.txt to $ANDROID_BUILD_TOP/external/icu4c/stubdata.
-#       Check the exemplar file under
-#       $ANDROID_BUILD_TOP/external/icu4c/stubdata/icudt42l-us.dat.
-#    2. Add an entry to main() --> datlist[]
-#    3. Run this script to generate dat files.
-#
-#  For ICU upgrade
-#    We cannot get CLDR version from dat file unless calling ICU function.
-#    If there is a CLDR version change, please modify "global CLDR_VERSION".
+#   $ANDROID_BUILD_TOP/external/icu4c/stubdata$ ./icu_dat_generator.py --verbose
 
+import fnmatch
 import getopt
+import glob
+import os
 import os.path
+import re
 import shutil
 import subprocess
 import sys
 
-# Return 0 if the version_string contains non-digit characters.
-def GetIcuVersion(version_string):
-  list = version_string.split(".")
-  version = ""
-  for number in list:
-    if (number.isdigit()):
-      version += number
-    else:
-      return -1
-  return version
 
-
-def PrintHelp():
+def PrintHelpAndExit():
   print "Usage:"
-  print "icu_dat_generator.py  icu-version [-v|--verbose] [-h|--help]"
+  print "  icu_dat_generator.py [-v|--verbose] [-h|--help]"
   print "Example:"
-  print "$ANDROID_BUILD_TOP/external/icu4c/stubdata$ ./icu_dat_generator.py 4.4"
+  print "  $ANDROID_BUILD_TOP/external/icu4c/stubdata$ ./icu_dat_generator.py"
+  sys.exit(1)
+
+
+def FindCountries(pattern, path):
+  result = []
+  for root, dirs, files in os.walk(path):
+    for name in files:
+      if fnmatch.fnmatch(name, pattern):
+        country = re.sub(r"[^_]*?_([[A-Za-z0-9]*).*", r'\1', name)
+        if len(country) > 0:
+          result.append(country)
+    if 'translit' in dirs:
+      dirs.remove('translit')
+  return sorted(set(result))
 
 
 def InvokeIcuTool(tool, working_dir, args):
-  command_list = [os.path.join(GetIcuPrebuiltDir(), tool)]
+  command_list = [os.path.join(ICU_PREBUILT_DIR, tool)]
   command_list.extend(args)
 
   if VERBOSE:
     command = "[%s] %s" % (working_dir, " ".join(command_list))
     print command
-  
-  ret = subprocess.call(command_list, cwd = working_dir)
+
+  ret = subprocess.call(command_list, cwd=working_dir)
   if ret != 0:
     sys.exit(command_list[0:])
 
 
-def GetIcuPrebuiltDir():
-  return os.path.join(os.environ.get("ANDROID_EABI_TOOLCHAIN"),  "..", "..",
-                      "..", "icu-" + ICU_VERSION)
+def ExtractAllResourceFilesToTmpDir():
+  # copy icudtXXl-all.dat to icudtXXl.dat
+  src_dat = os.path.join(ICU4C_DIR, "stubdata", ICU_DATA + "-all.dat")
+  dst_dat = os.path.join(ICU4C_DIR, "stubdata", ICU_DATA + ".dat")
+  shutil.copyfile(src_dat, dst_dat)
+  InvokeIcuTool("icupkg", None, [dst_dat, "-x", "*", "-d", TMP_DAT_PATH])
 
 
-def ExtractAllResourceToTempDir():
-  # copy icudtxxl-all.dat to icudtxxl.dat
-  source_dat = os.path.join(ANDROID_ROOT, "external", "icu4c", "stubdata",
-                            ICUDATA + "-all.dat")
-  dest_dat = os.path.join(ANDROID_ROOT, "external", "icu4c", "stubdata",
-                          ICUDATA_DAT)
-  shutil.copyfile(source_dat, dest_dat)
-  InvokeIcuTool("icupkg", None, [dest_dat, "-x", "*", "-d", TMP_DAT_PATH])
+def MakeDat(input_file, stubdata_dir):
+  print "------ Processing '%s'..." % (input_file)
+  if not os.path.isfile(input_file):
+    print "%s not a file!" % input_file
+    sys.exit(1)
+  GenResIndex(input_file)
+  CopyAndroidCnvFiles(stubdata_dir)
+  # Run "icupkg -tl -s icudtXXl -a icu-data-default.txt new icudtXXl.dat".
+  args = ["-tl", "-s", TMP_DAT_PATH, "-a", input_file, "new", ICU_DATA + ".dat"]
+  InvokeIcuTool("icupkg", TMP_DAT_PATH, args)
 
 
-def MakeDat(icu_dat_path, dat_name):
-  # Get the resource list. e.g. icudt42l-us.txt, icudt42l-default.txt.
-  dat_list_file_path = os.path.join(icu_dat_path, ICUDATA + "-" + dat_name +
-                                    ".txt")
-  if not os.path.isfile(dat_list_file_path):
-    print "%s not present for resource list." % dat_list_file_path
-    return
-  GenResIndex(dat_list_file_path)
-  CopyAndroidCnvFiles(icu_dat_path)
-  os.chdir(TMP_DAT_PATH)
-  # Run command such as "icupkg -tl -s icudt42l -a icudt42l-us.txt
-  # new icudt42l.dat"
-  InvokeIcuTool("icupkg", None, ["-tl", "-s", TMP_DAT_PATH, "-a", dat_list_file_path, "new",
-                ICUDATA_DAT])
-
-
-def WriteIndex(path, list, cldr_version = None):
-  res_index = "res_index.txt"
+def WriteIndex(path, locales):
   empty_value = " {\"\"}\n"  # key-value pair for all locale entries
 
   f = open(path, "w")
   f.write("res_index:table(nofallback) {\n")
-  if cldr_version:
-    f.write("  CLDRVersion { %s }\n" % cldr_version)
   f.write("  InstalledLocales {\n")
-  for item in list:
-    f.write(item + empty_value)
+  for locale in locales:
+    f.write(locale + empty_value)
 
   f.write("  }\n")
   f.write("}\n")
   f.close()
 
 
-def ShowMissing(whats, locales, data_dir_name, dat_file):
-  if not len(whats):
-    return
-  dat_file = os.path.basename(dat_file)
-  for missing in locales.difference(whats):
-    p = os.path.join(ANDROID_ROOT, "external", "icu4c", "data", data_dir_name,
-                     missing + ".txt")
-    if os.path.exists(p):
-      print "warning: %s exists but isn't included in %s" % (p, dat_file)
+def AddResFile(collection, path):
+  # There are two consumers of the the input .txt file: this script and
+  # icupkg. We only care about .res files, but icupkg needs files they depend
+  # on too, so it's not an error to have to ignore non-.res files here.
+  end = path.find(".res")
+  if end > 0:
+    collection.add(path[path.find("/")+1:end])
+  return
 
 
-# Open dat file such as icudt42l-us.txt.
+# Open input file (such as icu-data-default.txt).
 # Go through the list and generate res_index.txt for locales, brkitr,
-# coll and rbnf.
-def GenResIndex(dat_list_file_path):
+# coll, et cetera.
+def GenResIndex(input_file):
   res_index = "res_index.txt"
 
-  locales = set()
   brkitrs = set()
   colls = set()
   currs = set()
   langs = set()
+  locales = set()
   regions = set()
   zones = set()
-  rbnfs = set()
 
-  for line in open(dat_list_file_path, "r"):
-    if line.find("root.") >= 0:
+  for line in open(input_file, "r"):
+    if "root." in line or "res_index" in line or "_.res" in line:
       continue
-    if line.find("res_index") >= 0:
-      continue
-    if line.find("_.res") >= 0:
-      continue;
-    if line.find("brkitr/") >= 0:
-      end = line.find(".res")
-      if end > 0:
-        brkitrs.add(line[line.find("/")+1:end])
-    elif line.find("coll/") >= 0:
-      end = line.find(".res")
-      if end > 0:
-        colls.add(line[line.find("/")+1:end])
-    elif line.find("curr/") >= 0:
-      end = line.find(".res")
-      if end > 0:
-        currs.add(line[line.find("/")+1:end])
-    elif line.find("lang/") >= 0:
-      end = line.find(".res")
-      if end > 0:
-        langs.add(line[line.find("/")+1:end])
-    elif line.find("region/") >= 0:
-      end = line.find(".res")
-      if end > 0:
-        regions.add(line[line.find("/")+1:end])
-    elif line.find("zone/") >= 0:
-      end = line.find(".res")
-      if end > 0:
-        zones.add(line[line.find("/")+1:end])
-    elif line.find("rbnf/") >= 0:
-      end = line.find(".res")
-      if end > 0:
-        rbnfs.add(line[line.find("/")+1:end])
-    elif line.find(".res") >= 0:
+    if "brkitr/" in line:
+      AddResFile(brkitrs, line)
+    elif "coll/" in line:
+      AddResFile(colls, line)
+    elif "curr/" in line:
+      AddResFile(currs, line)
+    elif "lang/" in line:
+      AddResFile(langs, line)
+    elif "region/" in line:
+      AddResFile(regions, line)
+    elif "zone/" in line:
+      AddResFile(zones, line)
+    elif ".res" in line:
       # We need to determine the resource is locale resource or misc resource.
       # To determine the locale resource, we assume max script length is 3.
       end = line.find(".res")
       if end <= 3 or (line.find("_") <= 3 and line.find("_") > 0):
         locales.add(line[:end])
 
-  ShowMissing(brkitrs, locales, "brkitr", dat_list_file_path)
-  ShowMissing(colls, locales, "coll", dat_list_file_path)
-  ShowMissing(currs, locales, "curr", dat_list_file_path)
-  ShowMissing(langs, locales, "lang", dat_list_file_path)
-  ShowMissing(regions, locales, "region", dat_list_file_path)
-  ShowMissing(zones, locales, "zone", dat_list_file_path)
-  ShowMissing(rbnfs, locales, "rbnf", dat_list_file_path)
+  kind_to_locales = {
+      "brkitr": brkitrs,
+      "coll": colls,
+      "curr": currs,
+      "lang": langs,
+      "locales": locales,
+      "region": regions,
+      "zone": zones
+  }
 
-  WriteIndex(os.path.join(TMP_DAT_PATH, res_index), locales, CLDR_VERSION)
-  WriteIndex(os.path.join(TMP_DAT_PATH, "brkitr", res_index), brkitrs)
-  WriteIndex(os.path.join(TMP_DAT_PATH, "coll", res_index), colls)
-  WriteIndex(os.path.join(TMP_DAT_PATH, "curr", res_index), currs)
-  WriteIndex(os.path.join(TMP_DAT_PATH, "lang", res_index), langs)
-  WriteIndex(os.path.join(TMP_DAT_PATH, "region", res_index), regions)
-  WriteIndex(os.path.join(TMP_DAT_PATH, "zone", res_index), zones)
-  WriteIndex(os.path.join(TMP_DAT_PATH, "rbnf", res_index), rbnfs)
+  # Find every locale we've mentioned, for whatever reason.
+  every_locale = set()
+  for locales in kind_to_locales.itervalues():
+    every_locale = every_locale.union(locales)
+
+  if VERBOSE:
+    for kind, locales in kind_to_locales.items():
+      print "%s=%s" % (kind, sorted(locales))
+
+  # Print a human-readable list of the languages supported.
+  every_language = set()
+  for locale in every_locale:
+    language = re.sub(r"(_.*)", "", locale)
+    if language != "pool" and language != "supplementalData":
+      every_language.add(language)
+  input_basename = os.path.basename(input_file)
+  print "%s includes %s." % (input_basename, ", ".join(sorted(every_language)))
+
+  # Find cases where we've included only part of a locale's data.
+  missing_files = []
+  for locale in every_locale:
+    for kind, locales in kind_to_locales.items():
+      p = os.path.join(ICU4C_DIR, "data", kind, locale + ".txt")
+      if not locale in locales and os.path.exists(p):
+        missing_files.append(p)
+
+  # Warn about the missing files.
+  for missing_file in sorted(missing_files):
+    relative_path = "/".join(missing_file.split("/")[-2:])
+    print "warning: missing data for supported locale: %s" % relative_path
+
+  # Find cases where we've included only some of a language's countries.
+  for language in sorted(every_language):
+      all_countries = FindCountries('%s_*.txt' % language, '../data')
+      for country in all_countries:
+          if not '%s_%s' % (language, country) in every_locale:
+              print 'warning: language %s is missing country %s' % (language, country)
+
+
+  # Write the genrb input files.
+  WriteIndex(os.path.join(TMP_DAT_PATH, res_index), locales)
+  for kind, locales in kind_to_locales.items():
+    if kind == "locales":
+      continue
+    WriteIndex(os.path.join(TMP_DAT_PATH, kind, res_index), locales)
 
   # Call genrb to generate new res_index.res.
   InvokeIcuTool("genrb", TMP_DAT_PATH, [res_index])
-  InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, "brkitr"), [res_index])
-  InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, "coll"), [res_index])
-  InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, "curr"), [res_index])
-  InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, "lang"), [res_index])
-  InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, "region"), [res_index])
-  InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, "zone"), [res_index])
-  if len(rbnfs):
-    InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, "rbnf"), [res_index])
+  for kind, locales in kind_to_locales.items():
+    if kind == "locales":
+      continue
+    InvokeIcuTool("genrb", os.path.join(TMP_DAT_PATH, kind), [res_index])
 
 
-def CopyAndroidCnvFiles(icu_dat_path):
+def CopyAndroidCnvFiles(stubdata_dir):
   android_specific_cnv = ["gsm-03.38-2000.cnv",
                           "iso-8859_16-2001.cnv",
                           "docomo-shift_jis-2007.cnv",
@@ -225,85 +220,82 @@ def CopyAndroidCnvFiles(icu_dat_path):
                           "softbank-jisx-208-2007.cnv",
                           "softbank-shift_jis-2007.cnv"]
   for cnv_file in android_specific_cnv:
-    source_path = os.path.join(icu_dat_path, "cnv", cnv_file)
-    dest_path = os.path.join(TMP_DAT_PATH, cnv_file)
-    shutil.copyfile(source_path, dest_path)
+    src_path = os.path.join(stubdata_dir, "cnv", cnv_file)
+    dst_path = os.path.join(TMP_DAT_PATH, cnv_file)
+    shutil.copyfile(src_path, dst_path)
     if VERBOSE:
-      print "copy " + source_path + " " + dest_path
+      print "copy " + src_path + " " + dst_path
 
 
 def main():
-  global ANDROID_ROOT  # Android project home directory
-  global ICU_VERSION   # ICU version number
-  global ICUDATA       # e.g. "icudt42l"
-  global ICUDATA_DAT   # e.g. "icudt42l.dat"
-  global CLDR_VERSION  # CLDR version. The value can be vary upon ICU release.
-  global TMP_DAT_PATH  # temp directory to store all resource files and
-                       # intermediate dat files.
-  global HELP
+  global ANDROID_BUILD_TOP  # $ANDROID_BUILD_TOP
+  global ICU4C_DIR          # $ANDROID_BUILD_TOP/external/icu4c
+  global ICU_PREBUILT_DIR   # Directory containing pre-built ICU tools.
+  global ICU_DATA           # e.g. "icudt50l"
+  global TMP_DAT_PATH       # Temporary directory to store all resource files and
+                            # intermediate dat files.
   global VERBOSE
 
-  argc = len(sys.argv)
-  if argc < 2:
-    print "You must provide icu version number."
-    print "Example: ./icu_dat_generator.py 4.4"
-    sys.exit(1)
-  ICU_VERSION = sys.argv[1]
-  version = GetIcuVersion(ICU_VERSION)
-  if (version ==  -1):
-    print sys.argv[1] + " is not a valid icu version number!"
-    sys.exit(1)
-  ICUDATA = "icudt" + version + "l"
-  CLDR_VERSION = "1.8"
-  ANDROID_ROOT = os.environ.get("ANDROID_BUILD_TOP")
-  if not ANDROID_ROOT:
-    print "$ANDROID_BUILD_TOP not set! Run 'env_setup.sh'."
-    sys.exit(1)
-  ICUDATA_DAT = ICUDATA + ".dat"
-  HELP = False
   VERBOSE = False
 
+  show_help = False
   try:
-    opts, args = getopt.getopt(sys.argv[2:], 'hv', ['help', 'verbose'])
+    opts, args = getopt.getopt(sys.argv[1:], "hv", ["help", "verbose"])
   except getopt.error:
-    print "Invalid option"
-    PrintHelp()
-    sys.exit(1)
-  for opt, arg in opts:
-    if opt in ('-h', '--help'):
-      PrintHelp()
-      sys.exit(1)
-    elif opt in ('-v', '--verbose'):
+    PrintHelpAndExit()
+  for opt, _ in opts:
+    if opt in ("-h", "--help"):
+      show_help = True
+    elif opt in ("-v", "--verbose"):
       VERBOSE = True
+  if args:
+    show_help = True
 
+  if show_help:
+    PrintHelpAndExit()
 
-  # Check for requiered source files.
-  icu_dat_path = os.path.join(ANDROID_ROOT, "external", "icu4c", "stubdata")
-  full_data_filename = os.path.join(icu_dat_path, ICUDATA + "-all.dat")
+  ANDROID_BUILD_TOP = os.environ.get("ANDROID_BUILD_TOP")
+  if not ANDROID_BUILD_TOP:
+    print "$ANDROID_BUILD_TOP not set! Run 'env_setup.sh'."
+    sys.exit(1)
+  ICU4C_DIR = os.path.join(ANDROID_BUILD_TOP, "external", "icu4c")
+  stubdata_dir = os.path.join(ICU4C_DIR, "stubdata")
+
+  # Work out the ICU version from the source .dat filename, so we can find the
+  # appropriate pre-built ICU tools.
+  source_dat = os.path.basename(glob.glob(os.path.join(stubdata_dir, "icudt*.dat"))[0])
+  icu_version = re.sub(r"([^0-9])", "", source_dat)
+  ICU_PREBUILT_DIR = os.path.join(os.environ.get("ANDROID_BUILD_TOP"),
+      "prebuilts", "misc", "linux-x86_64", "icu-%s%s" % (icu_version[0], icu_version[1]))
+  if not os.path.exists(ICU_PREBUILT_DIR):
+    print "%s does not exist!" % ICU_PREBUILT_DIR
+
+  ICU_DATA = "icudt" + icu_version + "l"
+
+  # Check that icudtXXl-all.dat exists (since we build the other .dat files from that).
+  full_data_filename = os.path.join(stubdata_dir, ICU_DATA + "-all.dat")
   if not os.path.isfile(full_data_filename):
     print "%s not present." % full_data_filename
     sys.exit(1)
 
   # Create a temporary working directory.
-  TMP_DAT_PATH = os.path.join(ANDROID_ROOT, "external", "icu4c", "tmp")
+  TMP_DAT_PATH = os.path.join(ICU4C_DIR, "tmp")
   if os.path.exists(TMP_DAT_PATH):
     shutil.rmtree(TMP_DAT_PATH)
   os.mkdir(TMP_DAT_PATH)
 
-  # Extract resource files from icudtxxl-all.dat to TMP_DAT_PATH.
-  ExtractAllResourceToTempDir()
+  # Extract resource files from icudtXXl-all.dat to TMP_DAT_PATH.
+  ExtractAllResourceFilesToTmpDir()
 
-  datlist = ["us", "us-euro", "default", "us-japan", "zh", "medium", "large"]
-  for dat_subtag in datlist:
-    MakeDat(icu_dat_path, dat_subtag)
-    # Copy icudtxxl.dat to stubdata directory with corresponding subtag.
-    shutil.copyfile(os.path.join(TMP_DAT_PATH, ICUDATA_DAT),
-                    os.path.join(icu_dat_path, ICUDATA + "-" + dat_subtag + ".dat"))
-    print "Generate ICU data:" + os.path.join(icu_dat_path, ICUDATA + "-" + dat_subtag + ".dat")
+  input_file = os.path.join(stubdata_dir, "icu-data-default.txt")
+  output_file = os.path.join(stubdata_dir, ICU_DATA + "-default.dat")
+  MakeDat(input_file, stubdata_dir)
+  shutil.copyfile(os.path.join(TMP_DAT_PATH, ICU_DATA + ".dat"), output_file)
+  print "Generated ICU data: %s" % output_file
 
-  # Cleanup temporary working directory and icudtxxl.dat
+  # Cleanup temporary working directory and icudtXXl.dat
   shutil.rmtree(TMP_DAT_PATH)
-  os.remove(os.path.join(icu_dat_path, ICUDATA_DAT))
+  os.remove(os.path.join(stubdata_dir, ICU_DATA + ".dat"))
 
 if __name__ == "__main__":
   main()

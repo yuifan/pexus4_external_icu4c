@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2009, International Business Machines Corporation and
+ * Copyright (c) 1997-2010, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*****************************************************************************
@@ -178,7 +178,6 @@ static void TestSurrogateBehaviour(){
             log_err("u-> ibm-1363 [UCNV_MBCS] not match.\n");
     }
 
-
    /* BEGIN android-removed */
    /* To save space, Android does not build full ISO2022 CJK tables.
       We skip the tests for ISO-2022. */
@@ -192,8 +191,8 @@ static void TestSurrogateBehaviour(){
 
 
         int32_t offsets[] = {0,0,0,0,0,1,1,2,2,2,2,3,5 };
-     
-        // iso-2022-jp
+
+        // iso-2022-jp  android-change
         if(!convertFromU(sampleText, sizeof(sampleText)/sizeof(sampleText[0]),
                 expected, sizeof(expected), "iso-2022-jp", 0 , TRUE, U_ZERO_ERROR))
             log_err("u-> not match.\n");
@@ -223,7 +222,7 @@ static void TestSurrogateBehaviour(){
                                     3,  
                                     5,  };
 
-        // iso-2022-CN
+        // iso-2022-CN  android-change
         if(!convertFromU(sampleText, sizeof(sampleText)/sizeof(sampleText[0]),
                 expected, sizeof(expected), "iso-2022-cn", 0 , TRUE, U_ZERO_ERROR))
             log_err("u-> not match.\n");
@@ -253,7 +252,7 @@ static void TestSurrogateBehaviour(){
                               7,
                             };
 
-        // iso-2022-kr
+        // iso-2022-kr  android-change
         if(!convertFromU(sampleText, sizeof(sampleText)/sizeof(sampleText[0]),
                 expected, sizeof(expected), "iso-2022-kr", 0 , TRUE, U_ZERO_ERROR))
             log_err("u-> iso-2022-kr [UCNV_DBCS] not match.\n");
@@ -263,6 +262,7 @@ static void TestSurrogateBehaviour(){
     }
     */
     /* END android-removed */
+
         log_verbose("Testing for HZ\n");
     {
         static const UChar    sampleText[] =   { 0x4e00, 0xd801, 0xdc01, 0x04e01, 0x0031, 0xd801, 0xdc01, 0x0032};
@@ -452,6 +452,7 @@ static void TestErrorBehaviour(){
                 expected4MBCS, sizeof(expected4MBCS), "euc-jp", offsets4MBCS, FALSE, U_ZERO_ERROR))
             log_err("u-> euc-jp [UCNV_MBCS] \n");
     }
+
     /* BEGIN android-removed */
     /* To save space, Android does not build full ISO2022 CJK tables.
        We skip the tests for ISO-2022. */
@@ -496,7 +497,7 @@ static void TestErrorBehaviour(){
             log_err("u-> iso-2022-jp [UCNV_MBCS] \n");
     }
 
-    // iso-2022-cn
+    // iso-2022-cn  android-change
     log_verbose("Testing for iso-2022-cn\n");
     {
         static const UChar    sampleText[]    = { 0x0031, 0xd801};
@@ -547,7 +548,7 @@ static void TestErrorBehaviour(){
             log_err("u-> iso-2022-cn [UCNV_MBCS] \n");
     }
 
-    // iso-2022-kr
+    // iso-2022-kr  android-change
     log_verbose("Testing for iso-2022-kr\n");
     {
         static const UChar    sampleText[]    = { 0x0031, 0xd801};
@@ -1290,7 +1291,7 @@ static UBool testConvertFromU( const UChar *source, int sourceLen,  const uint8_
 
     log_verbose("\nConversion done [%d uchars in -> %d chars out]. \nResult :",
         sourceLen, targ-junkout);
-    if(VERBOSITY)
+    if(getTestOption(VERBOSITY_OPTION))
     {
         char junk[999];
         char offset_str[999];
@@ -1465,7 +1466,7 @@ static UBool testConvertToU( const uint8_t *source, int sourcelen, const UChar *
 
     log_verbose("\nConversion done. %d bytes -> %d chars.\nResult :",
         sourcelen, targ-junkout);
-    if(VERBOSITY)
+    if(getTestOption(VERBOSITY_OPTION))
     {
         char junk[999];
         char offset_str[999];
@@ -1591,7 +1592,7 @@ static void TestResetBehaviour(void){
                                     0x31,0x1A, 0x32};
         static const int32_t offsets1[] =  { 3,5,10,11,12};
 
-        // iso-2022-jp
+        // iso-2022-jp  android-change
         if(!testConvertFromU(sampleText, sizeof(sampleText)/sizeof(sampleText[0]),
                 expected, sizeof(expected), "iso-2022-jp",  UCNV_FROM_U_CALLBACK_SUBSTITUTE , NULL, TRUE))
             log_err("u-> not match.\n");
@@ -1636,7 +1637,7 @@ static void TestResetBehaviour(void){
                                     };
         static const int32_t offsets1[] =  { 5,7,13,16,17};
 
-        // iso-2022-CN
+        // iso-2022-CN  android-change
         if(!testConvertFromU(sampleText, sizeof(sampleText)/sizeof(sampleText[0]),
                 expected, sizeof(expected), "iso-2022-cn", UCNV_FROM_U_CALLBACK_SUBSTITUTE , NULL, TRUE))
             log_err("u-> not match.\n");
@@ -1685,7 +1686,7 @@ static void TestResetBehaviour(void){
                               13, 14, 15  
                       
                             };
-        // iso-2022-kr
+        // iso-2022-kr  android-change
         if(!testConvertFromU(sampleText, sizeof(sampleText)/sizeof(sampleText[0]),
                 expected, sizeof(expected), "iso-2022-kr",  UCNV_FROM_U_CALLBACK_SUBSTITUTE , NULL, TRUE))
             log_err("u-> iso-2022-kr [UCNV_DBCS] not match.\n");
@@ -1699,6 +1700,7 @@ static void TestResetBehaviour(void){
     }
     */
     /* END android-removed */
+
 
         log_verbose("Testing Reset for HZ\n");
     {

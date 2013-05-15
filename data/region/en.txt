@@ -1,9 +1,9 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2010 International Business Machines
+// * Copyright (C) 2012 International Business Machines
 // * Corporation and others.  All Rights Reserved.
-// * Tool: com.ibm.icu.dev.tool.cldr.LDML2ICUConverter.java
-// * Source File:<path>/common/main/en.xml
+// * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
+// * Source File: <path>/common/main/en.xml
 // *
 // ***************************************************************************
 /**
@@ -29,11 +29,10 @@ en{
         034{"Southern Asia"}
         035{"South-Eastern Asia"}
         039{"Southern Europe"}
-        053{"Australia and New Zealand"}
+        053{"Australasia"}
         054{"Melanesia"}
         057{"Micronesian Region"}
         061{"Polynesia"}
-        062{"South-Central Asia"}
         142{"Asia"}
         143{"Central Asia"}
         145{"Western Asia"}
@@ -41,10 +40,7 @@ en{
         151{"Eastern Europe"}
         154{"Northern Europe"}
         155{"Western Europe"}
-        172{"Commonwealth of Independent States"}
-        200{"Czechoslovakia"}
-        419{"Latin America and the Caribbean"}
-        830{"Channel Islands"}
+        419{"Latin America"}
         AC{"Ascension Island"}
         AD{"Andorra"}
         AE{"United Arab Emirates"}
@@ -76,6 +72,7 @@ en{
         BM{"Bermuda"}
         BN{"Brunei"}
         BO{"Bolivia"}
+        BQ{"Caribbean Netherlands"}
         BR{"Brazil"}
         BS{"Bahamas"}
         BT{"Bhutan"}
@@ -97,9 +94,9 @@ en{
         CO{"Colombia"}
         CP{"Clipperton Island"}
         CR{"Costa Rica"}
-        CS{"Serbia and Montenegro"}
         CU{"Cuba"}
         CV{"Cape Verde"}
+        CW{"Curaçao"}
         CX{"Christmas Island"}
         CY{"Cyprus"}
         CZ{"Czech Republic"}
@@ -259,8 +256,10 @@ en{
         SN{"Senegal"}
         SO{"Somalia"}
         SR{"Suriname"}
+        SS{"South Sudan"}
         ST{"São Tomé and Príncipe"}
         SV{"El Salvador"}
+        SX{"Sint Maarten"}
         SY{"Syria"}
         SZ{"Swaziland"}
         TA{"Tristan da Cunha"}
@@ -282,7 +281,7 @@ en{
         TZ{"Tanzania"}
         UA{"Ukraine"}
         UG{"Uganda"}
-        UM{"U.S. Minor Outlying Islands"}
+        UM{"U.S. Outlying Islands"}
         US{"United States"}
         UY{"Uruguay"}
         UZ{"Uzbekistan"}
@@ -300,7 +299,7 @@ en{
         ZA{"South Africa"}
         ZM{"Zambia"}
         ZW{"Zimbabwe"}
-        ZZ{"Unknown or Invalid Region"}
+        ZZ{"Unknown Region"}
     }
-    Version{"2.0.48.46"}
+    Version{"2.0.78.36"}
 }
